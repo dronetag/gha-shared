@@ -5,6 +5,9 @@ name: Check delivery
 on:
   workflow_call:
     inputs:
+      repository:
+        type: string
+        required: true
       awsRegion:
         type: string
         required: false
@@ -38,3 +41,5 @@ jobs:
       - id: release
         name: Check release existence
         uses: dronetag/gha-shared/.github/actions/ecr-check-image@master
+        with:
+          repository: ${{ inputs.repository }}

@@ -13,7 +13,7 @@ branding:
   icon: package
   color: blue
 inputs:
-  repositoryName:
+  repository:
     description: The name of the ECR repository
     required: true
   tag:
@@ -52,13 +52,13 @@ runs:
         IMAGE_TAG_QUERY="imageDetails[?contains(imageTags || ['0'], '${{ steps.tag.outputs.tag }}')]" 
         IMAGES_FOUND=$(\
           aws ecr describe-images \
-          --repository-name ${{ inputs.repositoryName }} \
+          --repository-name ${{ inputs.repository }} \
           --query "length($IMAGE_TAG_QUERY)" \
           --output text
         )
         if [[ "$IMAGES_FOUND" -le 0 ]]
         then
-          echo "::error::There was no image tag "${{ steps.tag.outputs.tag }}" found for ${{ inputs.repositoryName }}!"
+          echo "::error::There was no image tag "${{ steps.tag.outputs.tag }}" found for ${{ inputs.repository }}!"
           exit 1
         else
           echo "✔️ Image with tag "${{ steps.tag.outputs.tag }}" found in the repository."
@@ -70,14 +70,14 @@ runs:
         CRITICAL_ISSUES_QUERY="$IMAGE_TAG_QUERY.imageScanFindingsSummary.findingSeverityCounts.CRITICAL"
         CRITICAL_ISSUES_FOUND=$(\
           aws ecr describe-images \
-          --repository-name ${{ inputs.repositoryName }} \
+          --repository-name ${{ inputs.repository }} \
           --query "$CRITICAL_ISSUES_QUERY" \
           --output text
         )
         if [[ "$CRITICAL_ISSUES_FOUND" -ge 1 ]]
         then
           echo "::warning::The image" \
-          \"${{ inputs.repositoryName }}:${{ steps.tag.outputs.tag }}\" has" \
+          \"${{ inputs.repository }}:${{ steps.tag.outputs.tag }}\" has" \
           "$CRITICAL_ISSUES_FOUND critical vulnerability issues." \
           "See https://console.aws.amazon.com/ecr/repositories for details."
         fi
