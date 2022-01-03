@@ -21,9 +21,6 @@ on:
         type: string
         required: false
         default: "eu-north-1"
-      buildArgs:
-        type: string
-        required: false
     secrets:
       githubToken:
         required: true
@@ -31,6 +28,8 @@ on:
         required: true
       awsSecretAccessKey:
         required: true
+      buildArgs:
+        required: false
 
 jobs:
   build:
@@ -60,7 +59,7 @@ jobs:
         with:
           context: .
           push: true
-          build-args: ${{ inputs.buildArgs }}
+          build-args: ${{ secrets.buildArgs }}
           tags: |
             ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:${{ github.sha }}
             ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:${{ inputs.imageTag }}
