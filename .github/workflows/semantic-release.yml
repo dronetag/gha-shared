@@ -10,6 +10,10 @@ on:
     secrets:
       githubToken:
         required: true
+    outputs:
+      version:
+        description: Released version (commit tag)
+        value: ${{ jobs.release.outputs.version }}
 
 jobs:
   release:
