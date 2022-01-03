@@ -27,7 +27,5 @@ jobs:
           name: build
           path: /tmp
       - run: tar -C ${{ github.workspace }} -xf /tmp/build.tar
-      - name: Install pre-commit
-        run: python -m pip install pre-commit
       - name: Run pre-commit checks
-        run: pre-commit run --verbose --all-files
+        run: poetry run pre-commit run --verbose --all-files
