@@ -1,0 +1,27 @@
+name: Run pre-commit checks
+
+# A workflow that runs all-files check using pre-commit
+
+on:
+  workflow_call:
+    inputs:
+      pythonVersion:
+        required: false
+        type: string
+        default: "3.9"
+
+jobs:
+  check:
+    name: Run pre-commit checks on all files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ inputs.pythonVersion }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ inputs.pythonVersion }}
+      - name: Install pre-commit
+        run: python -m pip install pre-commit
+      - name: Run pre-commit checks
+        run: pre-commit run --verbose --all-files

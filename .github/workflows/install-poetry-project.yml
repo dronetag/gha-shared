@@ -1,0 +1,67 @@
+name: Install a Poetry project
+
+on:
+  workflow_call:
+    inputs:
+      pythonVersion:
+        required: false
+        type: string
+        default: "3.9"
+      poetryVersion:
+        required: false
+        type: string
+        default: "1.1.11"
+      privatePypiName:
+        required: false
+        type: string
+        default: ""
+    secrets:
+      privatePypiHost:
+        required: false
+      privatePypiUser:
+        required: false
+      privatePypiPass:
+        required: false
+
+jobs:
+  install:
+    name: Install a Poetry project
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update ubuntu
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends git gcc python3-dev
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+      - name: Set up Python ${{ inputs.pythonVersion }}
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ inputs.pythonVersion }}
+      - name: Install Poetry
+        uses: snok/install-poetry@v1.3.0
+        with:
+          version: ${{ inputs.poetryVersion }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+      - if: inputs.privatePypiName != ''
+        run: poetry config repositories.${{ inputs.privatePypiName }} https://${{ secrets.privatePypiHost }}
+      - if: inputs.privatePypiName != ''
+        run: poetry config http-basic.${{ inputs.privatePypiName }} ${{ secrets.privatePypiUser }} ${{ secrets.privatePypiPass }}
+      - name: Load dependency cache
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      - name: Install root project
+        run: poetry install --no-interaction
+      - run: tar -cvf /tmp/build.tar ${{ github.workspace }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: /tmp/build.tar
+          retention-days: 1

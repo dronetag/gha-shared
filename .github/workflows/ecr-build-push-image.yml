@@ -1,0 +1,68 @@
+name: Build & push an image to ECR
+
+# Builds an image using the project's Dockerfile, and pushes it
+# to ECR (Elastic Container Registry) repository.
+# 
+# Following three image tags will be pushed:
+#  - {repositoryName}:{imageTag}
+#  - {repositoryName}:{sha}
+#  - {repositoryName}:latest
+
+on:
+  workflow_call:
+    inputs:
+      imageTag:
+        type: string
+        required: true
+      repositoryName:
+        type: string
+        required: true
+      awsRegion:
+        type: string
+        required: false
+        default: "eu-north-1"
+      buildArgs:
+        type: string
+        required: false
+    secrets:
+      githubToken:
+        required: true
+      awsAccessKeyId:
+        required: true
+      awsSecretAccessKey:
+        required: true
+
+jobs:
+  build:
+    name: Build & push
+    runs-on: ubuntu-latest
+    needs: [release-version]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.awsAccessKeyId }}
+          aws-secret-access-key: ${{ secrets.awsSecretAccessKey }}
+          aws-region: ${{ inputs.awsRegion }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Authorize Docker to ghcr.io
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.githubToken }}
+      - name: Build & push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          build-args: ${{ inputs.buildArgs }}
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:${{ inputs.imageTag }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:latest
