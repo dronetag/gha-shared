@@ -37,4 +37,4 @@ jobs:
           mask-aws-account-id: false
       - id: release
         name: Check release existence
-        uses: dronetag/gha-shared/.github/actions/ecr-check-image
+        uses: dronetag/gha-shared/.github/actions/ecr-check-image@master
