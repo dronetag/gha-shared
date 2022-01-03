@@ -77,7 +77,7 @@ runs:
         if [[ "$CRITICAL_ISSUES_FOUND" -ge 1 ]]
         then
           echo "::warning::The image" \
-          \"${{ inputs.repository }}:${{ steps.tag.outputs.tag }}\" has" \
+          "\"${{ inputs.repository }}:${{ steps.tag.outputs.tag }}\" has" \
           "$CRITICAL_ISSUES_FOUND critical vulnerability issues." \
           "See https://console.aws.amazon.com/ecr/repositories for details."
         fi
