@@ -14,17 +14,6 @@ on:
       poetryVersion:
         required: false
         type: string
-      privatePypiName:
-        required: false
-        type: string
-        default: ""
-    secrets:
-      privatePypiHost:
-        required: false
-      privatePypiUser:
-        required: false
-      privatePypiPass:
-        required: false
 
 jobs:
   test:
