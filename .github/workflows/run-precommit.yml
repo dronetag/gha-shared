@@ -1,6 +1,9 @@
 name: Run pre-commit checks
 
 # A workflow that runs all-files check using pre-commit
+#
+# Assumes, that the `install-poetry-project.yml` was run previously and
+# therefore the `build` artifact exists.
 
 on:
   workflow_call:
@@ -15,12 +18,15 @@ jobs:
     name: Run pre-commit checks on all files
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
       - name: Set up Python ${{ inputs.pythonVersion }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ inputs.pythonVersion }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: build
+          path: /tmp
+      - run: tar -xf /tmp/build.tar
       - name: Install pre-commit
         run: python -m pip install pre-commit
       - name: Run pre-commit checks
