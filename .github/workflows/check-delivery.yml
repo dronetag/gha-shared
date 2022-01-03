@@ -17,6 +17,10 @@ on:
         required: true
       awsSecretAccessKey:
         required: true
+    outputs:
+      version:
+        description: Determined (or used) version of delivery
+        value: ${{ jobs.check.outputs.version }}
 
 jobs:
   check:

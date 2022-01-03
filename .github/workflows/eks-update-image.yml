@@ -6,6 +6,9 @@ name: Update image on EKS
 on:
   workflow_call:
     inputs:
+      version:
+        type: string
+        required: true
       containers:
         type: string
         required: true
@@ -45,14 +48,12 @@ jobs:
         name: List images to update
         env:
           CONTAINERS: ${{ inputs.containers }}
+          VERSION: ${{ inputs.version }}
         run: |
           AWS_ID=${{ steps.aws.outputs.aws-account-id }}
           ECR_URI="$AWS_ID.dkr.ecr.${{ inputs.awsRegion }}.amazonaws.com"
           REPOSITORY_URI="$ECR_URI/${{ inputs.repository }}"
-
-          VERSION=$(git describe --tags --exact-match ${{ github.sha }})
           IMAGE="$REPOSITORY_URI:$VERSION"
-
           echo "::set-output name=images::$(echo $CONTAINERS | sed "s|[^ ]*|&=$IMAGE|g")" 
       - name: Deploy image(s) to cluster
-        run: kubectl set image deployments --all ${{ inputs.images }}
+        run: kubectl set image deployments --all ${{ steps.list.outputs.images }}
