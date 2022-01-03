@@ -9,6 +9,9 @@ on:
       version:
         type: string
         required: true
+      deployment:
+        type: string
+        required: true
       containers:
         type: string
         required: true
@@ -56,4 +59,4 @@ jobs:
           IMAGE="$REPOSITORY_URI:$VERSION"
           echo "::set-output name=images::$(echo $CONTAINERS | sed "s|[^ ]*|&=$IMAGE|g")" 
       - name: Deploy image(s) to cluster
-        run: kubectl set image deployments --all ${{ steps.list.outputs.images }}
+        run: kubectl set image deployment/${{ inputs.deployment }} ${{ steps.list.outputs.images }}
