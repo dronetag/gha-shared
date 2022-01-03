@@ -59,7 +59,7 @@ jobs:
         run: poetry install --no-interaction --no-root
       - name: Install root project
         run: poetry install --no-interaction
-      - run: tar -cvf /tmp/build.tar ${{ github.workspace }}
+      - run: tar -C ${{ github.workspace }} -cvf /tmp/build.tar .
       - uses: actions/upload-artifact@v2
         with:
           name: build

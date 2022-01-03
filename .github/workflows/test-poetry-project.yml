@@ -35,6 +35,6 @@ jobs:
         with:
           name: build
           path: /tmp
-      - run: tar -xf /tmp/build.tar
+      - run: tar -C ${{ github.workspace }} -xf /tmp/build.tar
       - name: Run the test suite
         run: poetry run pytest --color=yes --verbose --showlocals --disable-warnings --cov=live tests
