@@ -11,9 +11,11 @@ on:
       pythonVersion:
         required: false
         type: string
+        default: "3.9"
       poetryVersion:
         required: false
         type: string
+        default: "1.1.11"
 
 jobs:
   test:
