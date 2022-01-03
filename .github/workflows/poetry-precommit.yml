@@ -1,4 +1,4 @@
-name: Run pre-commit checks
+name: Run pre-commit
 
 # A workflow that runs all-files check using pre-commit
 #

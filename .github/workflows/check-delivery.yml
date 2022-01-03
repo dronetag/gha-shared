@@ -1,4 +1,4 @@
-name: Check released delivery
+name: Check delivery
 
 # Checks if a delivery results exists for the version specified
 
@@ -17,7 +17,7 @@ on:
 
 jobs:
   check:
-    name: Check released delivery
+    name: Check image existence
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.release.outputs.tag }}

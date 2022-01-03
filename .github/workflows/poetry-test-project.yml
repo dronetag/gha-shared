@@ -1,4 +1,4 @@
-name: Run unit tests of a Poetry project
+name: Run pytest
 
 # Runs the pytest unit tests suite
 #
@@ -19,7 +19,7 @@ on:
 
 jobs:
   test:
-    name: Run unit test suite
+    name: Run test suite using pytest
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python ${{ env.pythonVersion }}

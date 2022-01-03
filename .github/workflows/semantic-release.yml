@@ -1,4 +1,4 @@
-name: Release a new version using semantic-release
+name: Run semantic-release
 
 on:
   workflow_call:
