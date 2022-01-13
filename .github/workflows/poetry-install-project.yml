@@ -15,6 +15,10 @@ on:
         required: false
         type: string
         default: ""
+      extraDependencies:
+        required: false
+        type: string
+        default: "git gcc postgresql-client libpq-dev graphviz gcc make git musl-dev libc-dev gdal-bin"
     secrets:
       privatePypiHost:
         required: false
@@ -29,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Update ubuntu
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends git gcc python3-dev
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ${{ inputs.extraDependencies }}
       - name: Checkout the repository
         uses: actions/checkout@v2
       - name: Set up Python ${{ inputs.pythonVersion }}
