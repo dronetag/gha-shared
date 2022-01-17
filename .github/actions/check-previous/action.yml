@@ -1,0 +1,14 @@
+name: Check previous workflow
+description: |
+  Action checks if there is a previously succeeded run of a specified
+  workflow for the current SHA
+inputs:
+  workflow-name:
+    description: The name of the workflow that should match
+    required: true
+  github-token:
+    description: Github PAT with repo scope to access the API
+    required: true
+runs:
+  using: node16
+  main: index.js

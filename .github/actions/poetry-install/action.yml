@@ -1,0 +1,73 @@
+name: Install Poetry project
+description: |
+  This action will install a Poetry project using `poetry install`, while also
+  authenticating to private PyPi repository and caching the results
+inputs:
+  python-version:
+    description: Python version to use
+    required: false
+    default: "3.9"
+  poetry-version:
+    description: Poetry version to use
+    required: false
+    default: "1.1.11"
+  extra-dependencies:
+    description: |
+      Any extra apt package dependencies which need to be installed beforehand
+    required: false
+    default: ""
+  private-pypi-name:
+    description: |
+      The name of the private PyPi repository, omit to skip the private 
+      repository authentication
+    required: false
+    default: dronetag
+  private-pypi-host:
+    description: Private PyPi hostname (name must be set)
+    required: false
+  private-pypi-user:
+    description: Private PyPi username (name must be set)
+    required: false
+  private-pypi-pass:
+    description: Private PyPi password (name must be set)
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Update ubuntu and install extra dependencies
+      if: inputs.extra-dependencies != ""
+      run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ${{ inputs.extra-dependencies }}
+      shell: bash
+    - name: Set up Python ${{ inputs.python-version }}
+      id: setup-python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Install Poetry
+      uses: snok/install-poetry@v1.3.0
+      with:
+        version: ${{ inputs.poetry-version }}
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
+    - name: Configure private PyPi
+      if: inputs.privatePypiName != ""
+      run: poetry config repositories.${{ inputs.privatePypiName }} https://${{ secrets.privatePypiHost }}
+      shell: bash
+    - name: Authenticate private PyPi
+      if: inputs.privatePypiName != ""
+      run: poetry config http-basic.${{ inputs.privatePypiName }} ${{ secrets.privatePypiUser }} ${{ secrets.privatePypiPass }}
+      shell: bash
+    - name: Load dependency cache
+      id: cached-poetry-dependencies
+      uses: actions/cache@v2
+      with:
+        path: .venv
+        key: venv-${{ github.repository }}-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+    - name: Install dependencies
+      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+      run: poetry install --no-interaction --no-root
+      shell: bash
+    - name: Install root project
+      run: poetry install --no-interaction
+      shell: bash
