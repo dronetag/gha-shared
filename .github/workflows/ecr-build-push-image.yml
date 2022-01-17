@@ -14,27 +14,27 @@ on:
       imageTag:
         type: string
         required: true
-      repositoryName:
+      repository-name:
         type: string
         required: true
-      awsRegion:
+      aws-region:
         type: string
         required: false
         default: "eu-north-1"
     secrets:
-      githubToken:
+      github-token:
         required: true
-      awsAccessKeyId:
+      aws-access-key-id:
         required: true
-      awsSecretAccessKey:
+      aws-secret-access-key:
         required: true
-      buildArgs:
+      build-args:
         required: false
 
 jobs:
   build:
     name: Build & push
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2

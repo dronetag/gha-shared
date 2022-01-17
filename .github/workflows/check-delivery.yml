@@ -1,6 +1,10 @@
 name: Check delivery
 
-# Checks if a delivery results exists for the version specified
+# A pre-deployment check which looks for a successful delivery
+#
+# This check makes sure that the deployment step can be performed. It makes
+# sure that the Delivery workflow has been successful, and checks if the
+# actual image exists on ECR.
 
 on:
   workflow_call:
@@ -8,22 +12,24 @@ on:
       repository:
         type: string
         required: true
-      awsRegion:
+      aws-region:
         type: string
         required: false
         default: "eu-north-1"
     secrets:
-      awsAccessKeyId:
+      github-token:
         required: true
-      awsSecretAccessKey:
+      aws-access-key-id:
+        required: true
+      aws-secret-access-key:
         required: true
     outputs:
       version:
         description: Determined (or used) version of delivery
-        value: ${{ jobs.check.outputs.version }}
+        value: ${{ jobs.check-image.outputs.version }}
 
 jobs:
-  check:
+  check-image:
     name: Check image existence
     runs-on: ubuntu-latest
     outputs:
@@ -38,9 +44,9 @@ jobs:
         name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.awsAccessKeyId }}
-          aws-secret-access-key: ${{ secrets.awsSecretAccessKey }}
-          aws-region: ${{ inputs.awsRegion }}
+          aws-access-key-id: ${{ secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+          aws-region: ${{ inputs.aws-region }}
           mask-aws-account-id: false
       - id: release
         name: Check release existence

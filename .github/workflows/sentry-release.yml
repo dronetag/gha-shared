@@ -1,5 +1,10 @@
 name: Create a release on Sentry
 
+# This workflows creates a new release on Sentry
+#
+# This is effectively just letting Sentry know that this version
+# might appear in the future error reports (nothing happens if they don't).
+
 on:
   workflow_call:
     inputs:
@@ -9,7 +14,7 @@ on:
     secrets:
       url:
         required: true
-      authToken:
+      auth-token:
         required: true
       organization:
         required: true
@@ -20,7 +25,7 @@ on:
 jobs:
   create-sentry-release:
     name: Create release on Sentry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
       - name: Checkout repository (full-depth)
         uses: actions/checkout@v2
@@ -29,7 +34,7 @@ jobs:
         uses: getsentry/action-release@v1
         env:
           SENTRY_URL: ${{ secrets.url }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.authToken }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.auth-token }}
           SENTRY_ORG: ${{ secrets.organization }}
           SENTRY_PROJECT: ${{ secrets.project }}
         with:

@@ -1,14 +1,19 @@
-name: Run semantic-release
+name: Release a new version
+
+# This workflow runs the semantic-release tool
+#
+# The semantic-release tool analyses the latest commits and figures out
+# how the version should be bumped and creates a git tag accordingly.
 
 on:
   workflow_call:
     inputs:
-      nodeVersion:
+      node-version:
         required: false
         type: string
         default: "16"
     secrets:
-      githubToken:
+      github-token:
         required: true
     outputs:
       version:
@@ -17,8 +22,8 @@ on:
 
 jobs:
   release:
-    name: Release new version
-    runs-on: ubuntu-latest
+    name: Run semantic-release
+    runs-on: ubuntu-20.04
     outputs:
       version: ${{ steps.export.outputs.version }}
     steps:
@@ -28,10 +33,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: ${{ inputs.nodeVersion }}
+          node-version: ${{ inputs.node-version }}
       - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.githubToken }}
+          GITHUB_TOKEN: ${{ secrets.github-token }}
         run: npx semantic-release
       - name: Export released version
         id: export

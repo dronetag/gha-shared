@@ -8,7 +8,7 @@ A collection of Github Actions Shared Actions and Workflows, mostly for internal
 
 As of January 2022, GitHub supports reusable workflows for GitHub Actions only [for public repositories](https://docs.github.com/en/actions/learn-github-actions/reusing-workflows#access-to-reusable-workflows). This is a stubborn limitation we hope gets fixed soon, because we are really uncomfortable publishing our internal workflows publicly.
 
-Not primarily for security reasons (but the risks, of course, exists), but more because we simply don't think that this is worth of a public repository. It's nothing interesting for our customers and partners and we feel ashamed, that this repository is present on our profile and shown to them.
+Not primarily for security reasons (but the risks, of course, exists), but more because we simply don't think that this is worth of a public repository. It doesn't bear any value for our customers and partners and shouldn't be visible to them.
 
 ## Like or hate what you see?
 
