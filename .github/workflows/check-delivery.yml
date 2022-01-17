@@ -53,3 +53,13 @@ jobs:
         uses: dronetag/gha-shared/.github/actions/ecr-check-image@master
         with:
           repository: ${{ inputs.repository }}
+
+  check-workflow:
+    name: Check that previous delivery was successful
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check previously run workflow
+        uses: dronetag/gha-shared/.github/actions/check-previous@master
+        with:
+          workflow-name: Delivery
+          github-token: ${{ secrets.github-token }}
