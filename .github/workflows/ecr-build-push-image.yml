@@ -2,18 +2,14 @@ name: Build & push to ECR
 
 # Builds an image using the project's Dockerfile, and pushes it
 # to ECR (Elastic Container Registry) repository.
-# 
-# Following three image tags will be pushed:
-#  - {repositoryName}:{imageTag}
-#  - {repositoryName}:{sha}
-#  - {repositoryName}:latest
 
 on:
   workflow_call:
     inputs:
-      imageTag:
+      tags:
         type: string
-        required: true
+        required: false
+        default: latest
       repository-name:
         type: string
         required: true
@@ -38,29 +34,28 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - id: auth
+        name: Authenticate to ECR and GHCR
+        uses: dronetag/gha-shared/.github/actions/ecr-authenticate@master
         with:
-          aws-access-key-id: ${{ secrets.awsAccessKeyId }}
-          aws-secret-access-key: ${{ secrets.awsSecretAccessKey }}
-          aws-region: ${{ inputs.awsRegion }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Authorize Docker to ghcr.io
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.githubToken }}
-      - name: Build & push
+          aws-access-key-id: ${{ secrets.aws-access-key-id }}
+          aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
+          aws-region: ${{ secrets.aws-region }}
+          github-token: ${{ secrets.github-token }}
+      - id: list
+        name: List output image tags
+        env:
+          TAGS: ${{ inputs.tags }}
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: ${{ inputs.repository-name }}
+        run: |
+          REPOSITORY_URI="$REGISTRY/$REPOSITORY"
+          echo "::set-output name=tags::$(echo $TAGS | sed "s|[^ ]*|$REPOSITORY_URI\:&|g")" 
+      - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
-          build-args: ${{ secrets.buildArgs }}
-          tags: |
-            ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:${{ github.sha }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:${{ inputs.imageTag }}
-            ${{ steps.login-ecr.outputs.registry }}/${{ inputs.repositoryName }}:latest
+          build-args: ${{ secrets.build-args }}
+          tags: ${{ steps.list.outputs.tags }}
