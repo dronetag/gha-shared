@@ -9,6 +9,13 @@ inputs:
   github-token:
     description: Github PAT with repo scope to access the API
     required: true
+  fail:
+    description: Fail the step if no successful run is found
+    required: false
+    default: "true"
+outputs:
+  found:
+    description: The result of the check
 runs:
   using: node16
   main: dist/index.js

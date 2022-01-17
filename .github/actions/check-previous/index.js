@@ -1,6 +1,13 @@
 const core = require('@actions/core')
 const github = require('@actions/github')
 
+function fail(message) {
+    if (core.getInput('fail') == 'true') {
+        core.setFailed(message)
+    }
+    core.setOutput('found', false)
+}
+
 async function list_workflows(name, token) {
     const actionsApi = github.getOctokit(token).rest.actions
     
@@ -20,9 +27,11 @@ async function check(workflow_name, token) {
     const count = successful_workflows.length
 
     if (count == 0) {
-        core.setFailed(`No successful ${workflow_name} run was found`)
+        core.notice(`There were no successful ${workflow_name} runs`)
+        fail(`No successful ${workflow_name} run was found`)
     } else {
         core.notice(`There are ${count} successful ${workflow_name} runs`)
+        core.setOutput('found', true)
     }
 }
 
