@@ -45,17 +45,13 @@ jobs:
       - name: Set-up kubectl
         uses: azure/setup-kubectl@v1
       - name: Get kubeconfig for cluster
-        run: aws eks update-kubeconfig --region ${{ inputs.awsRegion }} --name ${{ inputs.cluster }}
-      - id: list
-        name: List images to update
-        env:
-          CONTAINERS: ${{ inputs.containers }}
-          VERSION: ${{ inputs.version }}
-        run: |
-          AWS_ID=${{ steps.aws.outputs.aws-account-id }}
-          ECR_URI="$AWS_ID.dkr.ecr.${{ inputs.awsRegion }}.amazonaws.com"
-          REPOSITORY_URI="$ECR_URI/${{ inputs.repository }}"
-          IMAGE="$REPOSITORY_URI:$VERSION"
-          echo "::set-output name=images::$(echo $CONTAINERS | sed "s|[^ ]*|&=$IMAGE|g")" 
+        run: aws eks update-kubeconfig --region ${{ inputs.aws-region }} --name ${{ inputs.cluster }}
       - name: Deploy image(s) to cluster
-        run: kubectl set image deployment/${{ inputs.deployment }} ${{ steps.list.outputs.images }}
+        run: |
+          export AWS_ID=${{ steps.aws.outputs.aws-account-id }}
+          export ECR_URI="$AWS_ID.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com"
+          export REPOSITORY_URI="$ECR_URI/${{ inputs.repository }}"
+          export IMAGE="$REPOSITORY_URI:${{ inputs.version }}"
+          for DEP in $(echo ${{ inputs.deployments }}); do
+          kubectl set image deployment/$DEP $DEP=$IMAGE
+          done 
