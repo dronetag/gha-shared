@@ -21,7 +21,7 @@ inputs:
       The name of the private PyPi repository, omit to skip the private 
       repository authentication
     required: false
-    default: dronetag
+    default: ""
   private-pypi-host:
     description: Private PyPi hostname (name must be set)
     required: false
