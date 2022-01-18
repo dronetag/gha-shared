@@ -8,6 +8,10 @@ name: Release a new version
 on:
   workflow_call:
     inputs:
+      must-release:
+        required: false
+        type: boolean
+        default: false
       node-version:
         required: false
         type: string
@@ -40,4 +44,7 @@ jobs:
         run: npx semantic-release
       - name: Export released version
         id: export
-        run: echo "::set-output name=version::$(git describe --tags --abbrev=0)"
+        run: echo "::set-output name=version::$(git describe --tags)"
+      - name: Make sure a version has been released
+        if: inputs.must-release
+        run: git describe --tags --exact-match
