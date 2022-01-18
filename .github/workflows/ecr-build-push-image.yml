@@ -50,7 +50,7 @@ jobs:
           REPOSITORY: ${{ inputs.repository-name }}
         run: |
           REPOSITORY_URI="$REGISTRY/$REPOSITORY"
-          echo "::set-output name=tags::$(echo $TAGS | sed "s|[^ ]*|$REPOSITORY_URI\:&|g")" 
+          echo "::set-output name=tags::$(echo $TAGS | sed "s|[^ ]*|$REPOSITORY_URI\:&\n|g")" 
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
