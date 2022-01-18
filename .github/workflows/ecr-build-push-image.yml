@@ -40,7 +40,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.aws-access-key-id }}
           aws-secret-access-key: ${{ secrets.aws-secret-access-key }}
-          aws-region: ${{ secrets.aws-region }}
+          aws-region: ${{ inputs.aws-region }}
           github-token: ${{ secrets.github-token }}
       - id: list
         name: List output image tags
