@@ -46,7 +46,7 @@ jobs:
         name: List output image tags
         env:
           TAGS: ${{ inputs.tags }}
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REGISTRY: ${{ steps.auth.outputs.registry }}
           REPOSITORY: ${{ inputs.repository-name }}
         run: |
           REPOSITORY_URI="$REGISTRY/$REPOSITORY"
