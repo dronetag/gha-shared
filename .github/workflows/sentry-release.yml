@@ -39,3 +39,5 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.project }}
         with:
           version: ${{ inputs.version }}
+          ignore_missing: true
+          ignore_empty: true
