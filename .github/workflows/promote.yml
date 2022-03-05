@@ -1,0 +1,35 @@
+name: Promote current branch
+
+# This workflow promotes currently delivered to a maturity branch.
+# If set-up correctly, this workflow can be called from GitHub
+# using workflow_dispatch and have succeeding deployment workflow running.
+
+on:
+  workflow_call:
+    inputs:
+      branch:
+        required: true
+        type: string
+
+jobs:
+  check:
+    name: Check target branch ref
+    runs-on: ubuntu-latest
+    outputs:
+      branch-sha: ${{ steps.rev-parse.outputs.sha }}
+    steps:
+      - id: rev-parse
+        run: |
+          SHA=$(git rev-parse ${{ inputs.branch }})
+          echo "::set-output name=sha::$SHA"
+  ff:
+    name: Fast-forward the branch
+    runs-on: ubuntu-latest
+    needs: check
+    if: ${{ needs.check.outputs.branch-sha != github.sha }}
+    steps:
+      - run: echo "Forwarding ${{ inputs.branch }} to ${{ github.sha }}"
+      - run: git checkout ${{ inputs.branch }}
+      - run: git merge --ff ${{ github.sha }}
+      - run: git push
+      - run: echo "\n${{ inputs.branch }} is now on:\n $(git show --pretty=reference)"
