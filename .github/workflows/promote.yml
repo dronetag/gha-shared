@@ -35,7 +35,7 @@ jobs:
           exit 0
           else
             git checkout ${{ inputs.branch }}
-            git merge --ff ${{ github.sha }}
+            git reset --hard ${{ github.sha }}
             git push
           fi
       - run: echo "\n${{ inputs.branch }} is on:\n $(git show --pretty=reference)"
