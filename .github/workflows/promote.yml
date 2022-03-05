@@ -18,18 +18,24 @@ jobs:
     outputs:
       branch-sha: ${{ steps.rev-parse.outputs.sha }}
     steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+        with: { fetch-depth: 0 }
+      - name: Checkout the target branch
+        run: git checkout ${{ inputs.branch }}; git pull
       - id: rev-parse
+        name: Determine target branch's ref
         run: |
           SHA=$(git rev-parse ${{ inputs.branch }})
           echo "::set-output name=sha::$SHA"
-  ff:
-    name: Fast-forward the branch
-    runs-on: ubuntu-latest
-    needs: check
-    if: ${{ needs.check.outputs.branch-sha != github.sha }}
-    steps:
-      - run: echo "Forwarding ${{ inputs.branch }} to ${{ github.sha }}"
-      - run: git checkout ${{ inputs.branch }}
-      - run: git merge --ff ${{ github.sha }}
-      - run: git push
-      - run: echo "\n${{ inputs.branch }} is now on:\n $(git show --pretty=reference)"
+      - name: Fast-forward the branch (if necessary)
+        run: |
+          if [[ ${{ steps.rev-parse.outputs.sha }} == ${{ github.sha }} ]]
+            then
+          exit 0
+          else
+            git checkout ${{ inputs.branch }}
+            git merge --ff ${{ github.sha }}
+            git push
+          fi
+      - run: echo "\n${{ inputs.branch }} is on:\n $(git show --pretty=reference)"
