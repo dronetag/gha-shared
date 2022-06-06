@@ -1,0 +1,119 @@
+name: Announce Deployment
+
+# Announcemenet workflow that announces the release on slack
+
+on:
+  workflow_call:
+    inputs:
+      repository:
+        type: string
+        required: true
+      version:
+        type: string
+        required: true
+    secrets:
+      channel-id:
+        required: true
+      slack-bot-token:
+        required: true
+
+jobs:
+  git-log:
+    name: Get git log information
+    runs-on: ubuntu-latest
+    outputs:
+      last-commit-hash: ${{ steps.last-hash.outputs.hash }}
+      last-commit-date: ${{ steps.last-date.outputs.date }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - id: last-hash
+        run: echo "::set-output name=hash::$(git log --pretty="%h" -n 1)"
+      - id: last-date
+        run: echo "::set-output name=date::$(git log --pretty="%ai" -n 1)"
+
+  link-and-enviroment:
+    name: Get adress for link and enviroment
+    runs-on: ubuntu-latest
+    outputs:
+      link: ${{ steps.link-and-version.outputs.link }}
+      enviroment: ${{ steps.link-and-version.outputs.enviroment }}
+    steps:
+      - id: link-and-version
+        run: |
+          if [[ "${{github.ref}}" == "refs/heads/production" ]]
+            then
+              echo "::set-output name=link::https://dronetag.app/"
+              echo "::set-output name=enviroment::Production"
+          else if [[ "${{github.ref}}" == "refs/heads/staging" ]]
+            then
+              echo "::set-output name=link::https://staging.dronetag.app/"
+              echo "::set-output name=enviroment::Staging"
+            else
+              echo "::set-output name=link::UNKNOWN"
+              echo "::set-output name=enviroment::UNKNOWN"
+            fi
+          fi
+
+  announce-slack:
+    name: Announce deployment
+    runs-on: ubuntu-latest
+    needs: [git-log, link-and-enviroment]
+    steps:
+      - name: Post to a Slack channel
+        if: ${{needs.link-and-enviroment.outputs.enviroment != ''}}
+        id: slack
+        uses: slackapi/slack-github-action@v1.19.0
+        with:
+          channel-id: ${{ secrets.channel-id }}
+          payload: |
+            {
+              "text": "New version of ${{ inputs.repository }} has been deployed on the ${{ needs.link-and-enviroment.outputs.enviroment }} enviroment",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "New version of *${{ inputs.repository }}* has been deployed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Version:*\n${{ inputs.version }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Enviroment:*\n${{ needs.link-and-enviroment.outputs.enviroment }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Last Commit:*\n${{ needs.git-log.outputs.last-commit-hash }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*When:*\n${{ needs.git-log.outputs.last-commit-date }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "Deployed version can be now found <${{ needs.link-and-enviroment.outputs.link }}|here>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
