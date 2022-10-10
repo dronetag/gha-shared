@@ -22,6 +22,10 @@ inputs:
     description: Set to false if you want to skip the automatic project package installation
     required: false
     default: 'true'
+  git-ssh-key:
+    description: If set, an ssh-agent will be setup with this private SSH key
+    required: false
+    default: ''
 runs:
   using: composite
   steps:
@@ -33,11 +37,16 @@ runs:
         channel: stable
     - name: Setup Java environment
       uses: actions/setup-java@v2
-      if: ${{ inputs.setup-java }}
+      if: ${{ inputs.setup-java == 'true' }}
       with:
         distribution: 'zulu'
         java-version: ${{ inputs.java-version }}
+    - name: Set-up ssh-agent
+      uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
+      if: ${{ inputs.git-ssh-key != '' }}
+      with:
+        ssh-private-key: ${{ inputs.git-ssh-key }}
     - name: Get project dependencies
       shell: bash
       run: flutter pub get
-      if: ${{ inputs.install }}
+      if: ${{ inputs.install == 'true' }}
