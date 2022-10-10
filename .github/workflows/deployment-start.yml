@@ -1,0 +1,36 @@
+name: Start deployment
+
+# This workflow will mark a start of a deployment, after deployment
+# is finished, the `deployment-finish` workflow should be called
+
+on:
+  workflow_call:
+    secrets:
+      github-token:
+        required: true
+    inputs:
+      version:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+    outputs:
+      deployment-id:
+        description: The ID of created deployment
+        value: ${{ jobs.create-github-deployment.outputs.deployment-id }}
+
+jobs:
+  create-github-deployment:
+    name: Create new deployment on GitHub
+    runs-on: ubuntu-latest
+    outputs:
+      deployment-id: ${{ steps.deployment.outputs.deployment_id }}
+    steps:
+    - name: Start a new deployment
+      uses: bobheadxi/deployments@9d4477fdaa4120020cd10ab7e97f68c801422e73
+      id: deployment
+      with:
+        step: start
+        token: ${{ secrets.github-token }}
+        env: ${{ inputs.environment }}
