@@ -33,11 +33,11 @@ runs:
         channel: stable
     - name: Setup Java environment
       uses: actions/setup-java@v2
-      if: ${{ inputs.setup-java == 'true' }}
+      if: ${{ inputs.setup-java }}
       with:
         distribution: 'zulu'
         java-version: ${{ inputs.java-version }}
     - name: Get project dependencies
       shell: bash
       run: flutter pub get
-      if: ${{ inputs.install == 'true' }}
+      if: ${{ inputs.install }}
