@@ -9,9 +9,6 @@ on:
       github-token:
         required: true
     inputs:
-      version:
-        required: true
-        type: string
       environment:
         required: true
         type: string
