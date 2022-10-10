@@ -1,0 +1,43 @@
+name: Install Flutter project
+description: |
+  This action will install a Flutter project together with the required
+  Flutter environment
+inputs:
+  flutter-version:
+    description: Flutter version to use
+    required: true
+  flutter-architecture:
+    description: 'The architecture of Flutter SDK executable (x64 or arm64)'
+    required: false
+    default: '${{ runner.arch }}'
+  setup-java:
+    description: Defines if the Java environment should be set up
+    required: false
+    default: 'false'
+  java-version:
+    description: Java version used (applicable only when setup-java is true)
+    required: false
+    default: '15'
+  install:
+    description: Set to false if you want to skip the automatic project package installation
+    required: false
+    default: 'true'
+runs:
+  using: composite
+  steps:
+    - name: Install flutter environment
+      uses: subosito/flutter-action@1e6ee87cb840500837bcd50a667fb28815d8e310
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        architecture: ${{ inputs.flutter-architecture }}
+        channel: stable
+    - name: Setup Java environment
+      uses: actions/setup-java@v2
+      if: ${{ inputs.setup-java == 'true' }}
+      with:
+        distribution: 'zulu'
+        java-version: ${{ inputs.java-version }}
+    - name: Get project dependencies
+      shell: bash
+      run: flutter pub get
+      if: ${{ inputs.install == 'true' }}
