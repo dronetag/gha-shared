@@ -37,7 +37,7 @@ runs:
         --certificate-key "${{ inputs.certificate-private-key }}"
         --issuer-id "${{ inputs.appstore-issuer-id }}"
         --key-id "${{ inputs.appstore-key-id }}"
-        --private-id "${{ inputs.appstore-private-key }}"
+        --private-key "${{ inputs.appstore-private-key }}"
     - name: Initialize a new keychain
       shell: bash
       run: keychain initialize
