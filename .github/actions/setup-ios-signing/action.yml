@@ -1,0 +1,49 @@
+name: Set-up iOS signing files
+description: |
+  This action will obtain signing files from App Store Connect (or create
+  if not previously created), initializes a Mac keychain and stores the
+  files in it, and configures the XCode project to use those obtained files.
+  All performed using Codemagic's CLI tools.
+inputs:
+  app-bundle-name:
+    description: Application bundle name
+    required: true
+  appstore-private-key:
+    description: App Store Connect API private key
+    required: true
+  appstore-key-id:
+    description: App Store Connect API key ID
+    required: true
+  appstore-issuer-id:
+    description: App Store Connect API issuer ID
+    required: true
+  certificate-private-key:
+    description: A private key for the signing certificate to be fetched/created
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Set-up Codemagic CLI Tools
+      shell: bash
+      run: pip install codemagic-cli-tools
+    - name: Obtain signing files from App Store Connect
+      shell: bash
+      run: >
+        app-store-connect fetch-signing-files
+        "${{ inputs.app-bundle-name }}"
+        --platform IOS
+        --type IOS_APP_STORE
+        --create
+        --certificate-key "${{ inputs.certificate-private-key }}"
+        --issuer-id "${{ inputs.appstore-issuer-id }}"
+        --key-id "${{ inputs.appstore-key-id }}"
+        --private-id "${{ inputs.appstore-private-key }}"
+    - name: Initialize a new keychain
+      shell: bash
+      run: keychain initialize
+    - name: Add certificates to keychain
+      shell: bash
+      run: keychain add-certificates
+    - name: Use new certificates in the XCode project
+      shell: bash
+      run: xcode-project use-profiles
