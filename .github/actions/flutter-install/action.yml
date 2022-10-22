@@ -30,11 +30,12 @@ runs:
   using: composite
   steps:
     - name: Install flutter environment
-      uses: subosito/flutter-action@1e6ee87cb840500837bcd50a667fb28815d8e310
+      uses: subosito/flutter-action@dbf1fa04f4d2e52c33185153d06cdb5443aa189d
       with:
         flutter-version: ${{ inputs.flutter-version }}
         architecture: ${{ inputs.flutter-architecture }}
         channel: stable
+        cache: true
     - name: Setup Java environment
       uses: actions/setup-java@v2
       if: ${{ inputs.setup-java == 'true' }}
