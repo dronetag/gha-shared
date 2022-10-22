@@ -1,0 +1,66 @@
+name: Create a new release version
+
+# This workflow runs the semantic-release tool and creates a release
+# on GitHub for this version
+#
+# The semantic-release tool analyses the latest commits and figures out
+# how the version should be bumped and creates a git tag accordingly.
+
+on:
+  workflow_call:
+    inputs:
+      must-release:
+        required: false
+        type: boolean
+        default: false
+      skip-github-release:
+        required: false
+        type: boolean
+        default: false
+      node-version:
+        required: false
+        type: string
+        default: "16"
+    secrets:
+      github-token:
+        required: true
+    outputs:
+      version:
+        description: Released version (commit tag)
+        value: ${{ jobs.release.outputs.version }}
+
+jobs:
+  determine-release:
+    name: Determine new semantic version
+    runs-on: ubuntu-20.04
+    outputs:
+      version: ${{ steps.export.outputs.version }}
+    steps:
+      - name: Checkout repository (full-depth)
+        uses: actions/checkout@v2
+        with: { fetch-depth: 0 } # Required to determine version
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.github-token }}
+        run: npx semantic-release
+      - name: Make sure a version has been released
+        if: inputs.must-release
+        run: git describe --tags --exact-match
+      - name: Export released version
+        id: export
+        run: |
+          export VERSION=$(git describe --tags)
+          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+  create-release:
+    name: Create GitHub release version
+    runs-on: ubuntu-20.04
+    needs: determine-release
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+      - name: Create a new release
+        uses: ncipollo/release-action@v1
