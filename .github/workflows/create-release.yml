@@ -63,4 +63,10 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
       - name: Create a new release
-        uses: ncipollo/release-action@v1
+        id: create
+        uses: ncipollo/release-action@4c75f0f2e4ae5f3c807cf0904605408e319dcaac
+        with:
+          tag: ${{ needs.determine-release.outputs.version }}
+      - name: Make release summary
+        run: |
+          echo '**[Version ${{ needs.determine-release.outputs.version }} has been released.](${{ steps.create.outputs.html_url }})**' >> $GITHUB_STEP_SUMMARY
