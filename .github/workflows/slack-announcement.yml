@@ -1,16 +1,26 @@
-name: Announce Deployment
+name: Announce Deployment to Slack
 
-# Announcemenet workflow that announces the release on slack
+# Workflow for rich-text announcement of deployment result
+# to Slack channel
 
 on:
   workflow_call:
     inputs:
-      repository:
+      product-name:
         type: string
-        required: true
-      version:
+        required: false
+        default: ${{ github.repository }}
+      environment:
         type: string
-        required: true
+        required: false
+        default: ${{ github.ref }}
+      availability-text:
+        type: string
+        required: false
+      availability-url:
+        type: string
+        required: false
+        default: https://github.com/${{ github.repository }}/releases
     secrets:
       channel-id:
         required: true
@@ -18,102 +28,151 @@ on:
         required: true
 
 jobs:
-  git-log:
-    name: Get git log information
+  collect:
+    name: Collect repository information
     runs-on: ubuntu-latest
     outputs:
-      last-commit-hash: ${{ steps.last-hash.outputs.hash }}
-      last-commit-date: ${{ steps.last-date.outputs.date }}
+      version: ${{ steps.collected.outputs.version }}
+      environment: ${{ steps.collected.outputs.environment }}
+      changelog: ${{ steps.collected.outputs.changelog }}
+      deploy-date: ${{ steps.collected.outputs.deployed }}
+    env:
+      GIT_LOG_FORMAT: "format:<https://github.com/${{ github.repository }}/commit/%H|%h> %s"
+      TZ: Europe/Prague
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
-      - id: last-hash
-        run: echo "::set-output name=hash::$(git log --pretty="%h" -n 1)"
-      - id: last-date
-        run: echo "::set-output name=date::$(git log --pretty="%ai" -n 1)"
-
-  link-and-enviroment:
-    name: Get adress for link and enviroment
-    runs-on: ubuntu-latest
-    outputs:
-      link: ${{ steps.link-and-version.outputs.link }}
-      enviroment: ${{ steps.link-and-version.outputs.enviroment }}
-    steps:
-      - id: link-and-version
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Full history needed
+      - name: Collect information
+        id: collected
         run: |
-          if [[ "${{github.ref}}" == "refs/heads/production" ]]
-            then
-              echo "::set-output name=link::https://dronetag.app/"
-              echo "::set-output name=enviroment::Production"
-          else if [[ "${{github.ref}}" == "refs/heads/staging" ]]
-            then
-              echo "::set-output name=link::https://staging.dronetag.app/"
-              echo "::set-output name=enviroment::Staging"
-            else
-              echo "::set-output name=link::UNKNOWN"
-              echo "::set-output name=enviroment::UNKNOWN"
-            fi
-          fi
+          echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
+          export INPUT_ENVIRONMENT="${{ inputs.environment }}"
+          echo "environment=${INPUT_ENVIRONMENT##*/}" >> $GITHUB_OUTPUT
+          export PREV_TAG="$(git describe --tags --abbrev=0 @^)"
+          echo -n "changelog=" >> $GITHUB_OUTPUT
+          git log $PREV_TAG..@ --format="$GIT_LOG_FORMAT" --merges -n 10 | sed 's/$/\\n/' | tr -d '\n' >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "deployed=$(date +"%F %T")" >> $GITHUB_OUTPUT
 
-  announce-slack:
-    name: Announce deployment
+  send-announcement:
+    name: Send the announcement to Slack
     runs-on: ubuntu-latest
-    needs: [git-log, link-and-enviroment]
+    needs: collect
+    env:
+      PRODUCT_NAME: ${{ inputs.product-name }}
+      VERSION: ${{ needs.collect.outputs.version }}
+      ENVIRONMENT: ${{ needs.collect.outputs.environment }}
+      REPOSITORY_URL: https://github.com/${{ github.repository }}
+      REPOSITORY_NAME: ${{ github.repository }}
+      COMMIT_SHA: ${{ github.sha }}
+      DEPLOY_DATE: ${{ needs.collect.outputs.deploy-date }}
+      AVAILABILITY_TEXT: ${{ inputs.availability-text }}
+      AVAILABILITY_URL: ${{ inputs.availability-url }}
+      CHANGELOG: ${{ needs.collect.outputs.changelog }}
+      
     steps:
-      - name: Post to a Slack channel
-        if: ${{needs.link-and-enviroment.outputs.enviroment != ''}}
+      - name: Prepare optional sections
+        id: sections
+        run: |
+          if [[ ! -z "$AVAILABILITY_TEXT" ]]; then
+            echo "availabilitycontent=\
+              {\"type\": \"divider\"},\
+              {\
+                \"type\": \"section\",\
+                \"text\": {\"type\": \"mrkdwn\",\"text\": \"_${AVAILABILITY_TEXT}_\"},\
+                \"accessory\": {\
+                  \"type\": \"button\",\
+                  \"text\": {\"type\": \"plain_text\", \"text\": \"Open\"},\
+                  \"url\": \"$AVAILABILITY_URL\"\
+                }\
+              }," >> $GITHUB_OUTPUT
+          fi
+          if [[ ! -z "$CHANGELOG" ]]; then
+            printf "changelogcontent=\
+              {\"type\": \"divider\"},\
+              {\
+                \"type\": \"section\",\
+                \"text\": {\
+                  \"type\": \"mrkdwn\",\
+                  \"text\": \"*Introduced changes*%s\"\
+                }\
+              },\n" "\n$CHANGELOG" >> $GITHUB_OUTPUT
+          fi
+          echo "shashort=${COMMIT_SHA:0:8}" >> $GITHUB_OUTPUT
+      - name: Send request to Slack
         id: slack
-        uses: slackapi/slack-github-action@v1.19.0
+        uses: slackapi/slack-github-action@v1.23.0
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
         with:
           channel-id: ${{ secrets.channel-id }}
           payload: |
             {
-              "text": "New version of ${{ inputs.repository }} has been deployed on the ${{ needs.link-and-enviroment.outputs.enviroment }} enviroment",
+              "text": "${{ env.PRODUCT_NAME }} ${{ env.VERSION }} has been deployed to ${{ env.ENVIRONMENT }}",
               "blocks": [
                 {
-                  "type": "section",
+                  "type": "header",
                   "text": {
-                    "type": "mrkdwn",
-                    "text": "New version of *${{ inputs.repository }}* has been deployed"
+                    "type": "plain_text",
+                    "text": "${{ env.PRODUCT_NAME }} ${{ env.VERSION }} has been deployed to ${{ env.ENVIRONMENT }}",
+                    "emoji": true
                   }
                 },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "<${{ env.REPOSITORY_URL }}|${{ env.REPOSITORY_NAME }}>"
+                    }
+                  ]
+                },
+                {"type": "divider"},
                 {
                   "type": "section",
                   "fields": [
                     {
-                      "type": "mrkdwn",
-                      "text": "*Version:*\n${{ inputs.version }}"
+                      "type": "mrkdwn", "text": "*Version*\n${{ env.VERSION }}"
+                    },
+                    {
+                      "type": "mrkdwn", "text": "*Environment*\n${{ env.ENVIRONMENT }}"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*Enviroment:*\n${{ needs.link-and-enviroment.outputs.enviroment }}"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Last Commit:*\n${{ needs.git-log.outputs.last-commit-hash }}"
+                      "text": "*Commit SHA*\n<${{ env.REPOSITORY_URL }}/commit/${{ env.COMMIT_SHA }}|${{ steps.sections.outputs.shashort }}>"
                     },
                     {
                       "type": "mrkdwn",
-                      "text": "*When:*\n${{ needs.git-log.outputs.last-commit-date }}"
+                      "text": "*Deployed at*\n${{ env.DEPLOY_DATE }}"
                     }
                   ]
                 },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "Deployed version can be now found <${{ needs.link-and-enviroment.outputs.link }}|here>"
-                  }
-                }
+                ${{ steps.sections.outputs.availabilitycontent }}
+                ${{ steps.sections.outputs.changelogcontent }}
+                {"type": "divider"}
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
+      - name: Make announcement summary on GitHub
+        id: github-summary
+        run: |
+          echo "## $PRODUCT_NAME $VERSION deployed to $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** $VERSION  " >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** $ENVIRONMENT  " >> $GITHUB_STEP_SUMMARY
+          echo "**Commit SHA:** $COMMIT_SHA  " >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed at:** $DEPLOY_DATE  " >> $GITHUB_STEP_SUMMARY
+          if [[ ! -z "$AVAILABILITY_TEXT" ]]; then
+            echo "" >>  $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >>  $GITHUB_STEP_SUMMARY
+            echo "$AVAILABILITY_TEXT  " >> $GITHUB_STEP_SUMMARY
+            echo "[Open]($AVAILABILITY_URL)" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [[ ! -z "$CHANGELOG" ]]; then
+            echo "" >>  $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >>  $GITHUB_STEP_SUMMARY
+            echo "### Introduced changes" >> $GITHUB_STEP_SUMMARY
+            echo "$CHANGELOG" >> $GITHUB_STEP_SUMMARY
+          fi
