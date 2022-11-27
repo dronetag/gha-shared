@@ -68,6 +68,7 @@ jobs:
         with:
           tag: "v${{ needs.determine-release.outputs.version }}"
           name: ${{ needs.determine-release.outputs.version }}
+          generateReleaseNotes: true
       - name: Make release summary
         run: |
           echo '**[Version ${{ needs.determine-release.outputs.version }} has been released.](${{ steps.create.outputs.html_url }})**' >> $GITHUB_STEP_SUMMARY
