@@ -41,7 +41,7 @@ jobs:
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
-        run: npx semantic-release
+        run: npx semantic-release@19
       - name: Export released version
         id: export
         run: echo "::set-output name=version::$(git describe --tags)"
