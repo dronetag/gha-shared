@@ -21,6 +21,9 @@ on:
         type: string
         required: false
         default: https://github.com/${{ github.repository }}/releases
+      release-url:
+        type: string
+        required: false
     secrets:
       channel-id:
         required: true
@@ -70,6 +73,7 @@ jobs:
       DEPLOY_DATE: ${{ needs.collect.outputs.deploy-date }}
       AVAILABILITY_TEXT: ${{ inputs.availability-text }}
       AVAILABILITY_URL: ${{ inputs.availability-url }}
+      RELEASE_URL: ${{ inputs.release-url }}
       CHANGELOG: ${{ needs.collect.outputs.changelog }}
       
     steps:
@@ -134,7 +138,7 @@ jobs:
                   "type": "section",
                   "fields": [
                     {
-                      "type": "mrkdwn", "text": "*Version*\n${{ env.VERSION }}"
+                      "type": "mrkdwn", "text": "*Version*\n<${{ env.RELEASE_URL }}|${{ env.VERSION }}>"
                     },
                     {
                       "type": "mrkdwn", "text": "*Environment*\n${{ env.ENVIRONMENT }}"
@@ -162,6 +166,9 @@ jobs:
           echo "**Environment:** $ENVIRONMENT  " >> $GITHUB_STEP_SUMMARY
           echo "**Commit SHA:** $COMMIT_SHA  " >> $GITHUB_STEP_SUMMARY
           echo "**Deployed at:** $DEPLOY_DATE  " >> $GITHUB_STEP_SUMMARY
+          if [[ ! -z "$RELEASE_URL" ]]; then
+            echo "**GitHub Release:** [$VERSION]($RELEASE_URL)"
+          fi
           if [[ ! -z "$AVAILABILITY_TEXT" ]]; then
             echo "" >>  $GITHUB_STEP_SUMMARY
             echo "---" >> $GITHUB_STEP_SUMMARY
