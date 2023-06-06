@@ -1,0 +1,41 @@
+name: Un-pack AAB to APK
+description: |
+  This action will unpack AAB Android bundle to universal APK
+inputs:
+  bundle-path:
+    description: The path to the bundle
+    required: true
+  bundletool-version:
+    description: Flutter version to use
+    required: false
+    default: "1.15.1"
+  java-version:
+    description: Java version used
+    required: false
+    default: "20"
+outputs:
+  filename:
+    description: The filename of resulting APK
+    value: ${{ steps.result.outputs.filename }}
+runs:
+  using: composite
+  steps:
+    - name: Setup Java environment
+      uses: actions/setup-java@v2
+      with:
+        distribution: "zulu"
+        java-version: ${{ inputs.java-version }}
+    - name: Download bundletool
+      shell: bash
+      run: wget "https://github.com/google/bundletool/releases/download/${{ inputs.bundletool-version }}/bundletool-all-${{ inputs.bundletool-version }}.jar" -O "${{runner.temp}}/bundletool.jar"
+    - name: Build APKs
+      shell: bash
+      run: |
+        java "${{runner.temp}}/bundletool.jar" build-apks --mode universal --bundle "${{ inputs.bundle-path}}" --output "${{runner.temp}}/bundle.apks"
+        unzip "${{runner.temp}}/bundle.apks"
+    - name: Output the result
+      id: result
+      shell: bash
+      run: |
+        echo "filename=universal.apk" >> "$GITHUB_OUTPUT"
+      # FIXME: Filename should be read from unzip stdout
