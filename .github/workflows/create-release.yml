@@ -1,6 +1,6 @@
 name: Create a new release version
 
-# This workflow runs the semantic-release tool and creates a release
+# This workflow runs the semantic-release tool and optionally creates a release
 # on GitHub for this version
 #
 # The semantic-release tool analyses the latest commits and figures out
@@ -13,21 +13,27 @@ on:
         required: false
         type: boolean
         default: false
-      skip-github-release:
+      create-github-release:
         required: false
         type: boolean
-        default: false
+        default: true
       node-version:
         required: false
         type: string
         default: "16"
+      release-files:
+        required: false
+        type: string
     secrets:
       github-token:
         required: true
     outputs:
       version:
         description: Released version (commit tag)
-        value: ${{ jobs.release.outputs.version }}
+        value: ${{ jobs.determine-release.outputs.version }}
+      release_url:
+        description: The URL for created release on GitHub
+        value: ${{ jobs.create-release.outputs.url }}
 
 jobs:
   determine-release:
@@ -59,16 +65,18 @@ jobs:
     name: Create GitHub release version
     runs-on: ubuntu-20.04
     needs: determine-release
+    if: ${{ inputs.create-github-release }}
+    outputs:
+      url: ${{ steps.create.outputs.url }}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
       - name: Create a new release
         id: create
-        uses: ncipollo/release-action@4c75f0f2e4ae5f3c807cf0904605408e319dcaac
+        uses: softprops/action-gh-release@c9b46fe7aad9f02afd89b12450b780f52dacfb2d
         with:
-          tag: "v${{ needs.determine-release.outputs.version }}"
-          name: ${{ needs.determine-release.outputs.version }}
-          generateReleaseNotes: true
+          generate_release_notes: true
+          files: ${{ inputs.release-files }}
       - name: Make release summary
         run: |
           echo '**[Version ${{ needs.determine-release.outputs.version }} has been released.](${{ steps.create.outputs.html_url }})**' >> $GITHUB_STEP_SUMMARY
