@@ -31,24 +31,27 @@ on:
         required: true
 
 jobs:
-  collect:
-    name: Collect repository information
+  send-announcement:
+    name: Send the announcement to Slack
     runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.collected.outputs.version }}
-      environment: ${{ steps.collected.outputs.environment }}
-      changelog: ${{ steps.collected.outputs.changelog }}
-      deploy-date: ${{ steps.collected.outputs.deployed }}
     env:
       GIT_LOG_FORMAT: "format:<https://github.com/${{ github.repository }}/commit/%H|%h> %s"
       TZ: Europe/Prague
+      PRODUCT_NAME: ${{ inputs.product-name }}
+      REPOSITORY_URL: https://github.com/${{ github.repository }}
+      REPOSITORY_NAME: ${{ github.repository }}
+      COMMIT_SHA: ${{ github.sha }}
+      AVAILABILITY_TEXT: ${{ inputs.availability-text }}
+      AVAILABILITY_URL: ${{ inputs.availability-url }}
+      RELEASE_URL: ${{ inputs.release-url }}
+      
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0 # Full history needed
-      - name: Collect information
-        id: collected
+        with: { fetch-depth: 0 } # Full history needed
+
+      - name: Collect repository information
+        id: collect
         run: |
           echo "version=$(git describe --tags)" >> $GITHUB_OUTPUT
           export INPUT_ENVIRONMENT="${{ inputs.environment }}"
@@ -59,26 +62,10 @@ jobs:
           echo "" >> $GITHUB_OUTPUT
           echo "deployed=$(date +"%F %T")" >> $GITHUB_OUTPUT
 
-  send-announcement:
-    name: Send the announcement to Slack
-    runs-on: ubuntu-latest
-    needs: collect
-    env:
-      PRODUCT_NAME: ${{ inputs.product-name }}
-      VERSION: ${{ needs.collect.outputs.version }}
-      ENVIRONMENT: ${{ needs.collect.outputs.environment }}
-      REPOSITORY_URL: https://github.com/${{ github.repository }}
-      REPOSITORY_NAME: ${{ github.repository }}
-      COMMIT_SHA: ${{ github.sha }}
-      DEPLOY_DATE: ${{ needs.collect.outputs.deploy-date }}
-      AVAILABILITY_TEXT: ${{ inputs.availability-text }}
-      AVAILABILITY_URL: ${{ inputs.availability-url }}
-      RELEASE_URL: ${{ inputs.release-url }}
-      CHANGELOG: ${{ needs.collect.outputs.changelog }}
-      
-    steps:
       - name: Prepare optional sections
         id: sections
+        env:
+          CHANGELOG: ${{ steps.collect.outputs.changelog }}
         run: |
           if [[ ! -z "$AVAILABILITY_TEXT" ]]; then
             echo "availabilitycontent=\
@@ -110,6 +97,10 @@ jobs:
         uses: slackapi/slack-github-action@v1.23.0
         env:
           SLACK_BOT_TOKEN: ${{ secrets.slack-bot-token }}
+          VERSION: ${{ steps.collect.outputs.version }}
+          ENVIRONMENT: ${{ steps.collect.outputs.environment }}
+          DEPLOY_DATE: ${{ steps.collect.outputs.deploy-date }}
+          CHANGELOG: ${{ steps.collect.outputs.changelog }}
         with:
           channel-id: ${{ secrets.channel-id }}
           payload: |
@@ -160,6 +151,11 @@ jobs:
             }
       - name: Make announcement summary on GitHub
         id: github-summary
+        env:
+          VERSION: ${{ steps.collect.outputs.version }}
+          ENVIRONMENT: ${{ steps.collect.outputs.environment }}
+          DEPLOY_DATE: ${{ steps.collect.outputs.deploy-date }}
+          CHANGELOG: ${{ steps.collect.outputs.changelog }}
         run: |
           echo "## $PRODUCT_NAME $VERSION deployed to $ENVIRONMENT" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** $VERSION  " >> $GITHUB_STEP_SUMMARY
