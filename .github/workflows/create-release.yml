@@ -76,6 +76,7 @@ jobs:
         id: create
         uses: softprops/action-gh-release@c9b46fe7aad9f02afd89b12450b780f52dacfb2d
         with:
+          tag_name: ${{ needs.determine-release.outputs.version }}
           generate_release_notes: true
           files: ${{ inputs.release-files }}
       - name: Make release summary
