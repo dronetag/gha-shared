@@ -6,7 +6,7 @@ inputs:
     description: The path to the bundle
     required: true
   bundletool-version:
-    description: Flutter version to use
+    description: Bundletool version to use
     required: false
     default: "1.15.1"
   java-version:

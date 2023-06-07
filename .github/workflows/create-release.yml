@@ -71,6 +71,7 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
+        with: { fetch-depth: 0 }
       - name: Create a new release
         id: create
         uses: softprops/action-gh-release@c9b46fe7aad9f02afd89b12450b780f52dacfb2d
@@ -79,4 +80,4 @@ jobs:
           files: ${{ inputs.release-files }}
       - name: Make release summary
         run: |
-          echo '**[Version ${{ needs.determine-release.outputs.version }} has been released.](${{ steps.create.outputs.html_url }})**' >> $GITHUB_STEP_SUMMARY
+          echo '**[Version ${{ needs.determine-release.outputs.version }} has been released.](${{ steps.create.outputs.url }})**' >> $GITHUB_STEP_SUMMARY
