@@ -31,7 +31,7 @@ runs:
     - name: Build APKs
       shell: bash
       run: |
-        java "${{runner.temp}}/bundletool.jar" build-apks --mode universal --bundle "${{ inputs.bundle-path}}" --output "${{runner.temp}}/bundle.apks"
+        java -jar "${{runner.temp}}/bundletool.jar" build-apks --mode universal --bundle "${{ inputs.bundle-path }}" --output "${{runner.temp}}/bundle.apks"
         unzip "${{runner.temp}}/bundle.apks"
     - name: Output the result
       id: result
