@@ -31,6 +31,9 @@ inputs:
   private-pypi-pass:
     description: Private PyPi password (name must be set)
     required: false
+  path:
+    description: The path to the Poetry project working directory
+    required: false
 runs:
   using: composite
   steps:
@@ -68,6 +71,8 @@ runs:
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root
       shell: bash
+      working-directory: ${{ inputs.path }}
     - name: Install root project
       run: poetry install --no-interaction
       shell: bash
+      working-directory: ${{ inputs.path }}
