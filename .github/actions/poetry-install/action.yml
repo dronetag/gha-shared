@@ -10,7 +10,7 @@ inputs:
   poetry-version:
     description: Poetry version to use
     required: false
-    default: "1.2.0"
+    default: "1.5.1"
   extra-dependencies:
     description: |
       Any extra apt package dependencies which need to be installed beforehand
