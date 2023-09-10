@@ -1,0 +1,18 @@
+name: Update pubspec.yaml version
+description: |
+  This action will update the version in pubspec.yaml
+inputs:
+  version:
+    description: Version string
+    required: true
+  path:
+    description: Pubspec path
+    required: false
+    default: "pubspec.yaml"
+runs:
+  using: composite
+  steps:
+    - name: Update the version field
+      uses: mikefarah/yq@de55fb398864245f1487a3b66f79c87fd4ba3de3
+      with:
+        cmd: yq -i '.version = "${{ inputs.version }}"' ${{ inputs.path }}
