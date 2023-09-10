@@ -27,6 +27,9 @@ on:
       install-changelog-plugin:
         type: boolean
         default: false
+      install-yq:
+        type: boolean
+        default: false
     secrets:
       github-token:
         required: true
@@ -55,6 +58,8 @@ jobs:
       - run: npm install --global semantic-release@21
       - if: ${{ inputs.install-changelog-plugin }}
         run: npm install --global @semantic-release/git @semantic-release/changelog
+      - if: ${{ inputs.install-yq }}
+        run: sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
