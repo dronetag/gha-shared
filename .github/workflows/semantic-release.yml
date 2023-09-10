@@ -15,7 +15,10 @@ on:
       node-version:
         required: false
         type: string
-        default: "16"
+        default: "18"
+      install-changelog-plugin:
+        type: boolean
+        default: false
     secrets:
       github-token:
         required: true
@@ -38,10 +41,13 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ inputs.node-version }}
+      - run: npm install --global semantic-release@21
+      - if: ${{ inputs.install-changelog-plugin }}
+        run: npm install --global @semantic-release/git @semantic-release/changelog
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
-        run: npx semantic-release@21
+        run: semantic-release
       - name: Export released version
         id: export
         run: echo "::set-output name=version::$(git describe --tags)"

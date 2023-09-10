@@ -20,10 +20,13 @@ on:
       node-version:
         required: false
         type: string
-        default: "16"
+        default: "18"
       release-files:
         required: false
         type: string
+      install-changelog-plugin:
+        type: boolean
+        default: false
     secrets:
       github-token:
         required: true
@@ -49,10 +52,13 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
+      - run: npm install --global semantic-release@21
+      - if: ${{ inputs.install-changelog-plugin }}
+        run: npm install --global @semantic-release/git @semantic-release/changelog
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.github-token }}
-        run: npx semantic-release@19
+        run: semantic-release
       - name: Make sure a version has been released
         if: inputs.must-release
         run: git describe --tags --exact-match
