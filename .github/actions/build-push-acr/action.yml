@@ -1,0 +1,49 @@
+name: Build & push
+description: |
+Builds an image using the project's Dockerfile, and pushes it 
+to ACR (Azure Container Registry) repository.
+secrets:
+  github-token:
+    required: true
+  acr-login-server:
+    required: true
+  acr-username:
+    required: true
+  acr-password:
+    required: true
+  build-args:
+    required: false
+steps:
+  - name: Checkout repository
+    uses: actions/checkout@v2
+  - id: auth-acr
+    name: Authenticate with ACR
+    uses: azure/docker-login@v1
+    with:
+      login-server: ${{ secrets.acr-login-server }}
+      username: ${{ secrets.acr-username }}
+      password: ${{ secrets.acr-password }}
+  - id: auth-ghcr
+    name: Authorize Docker to ghcr.io
+    uses: docker/login-action@v1
+    with:
+      registry: ghcr.io
+      username: ${{ github.actor }}
+      password: ${{ secrets.github-token }}
+  - id: list
+    name: List output image tags
+    env:
+      TAGS: ${{ inputs.tags }}
+      REGISTRY: ${{ secrets.acr-login-server }}
+      REPOSITORY: ${{ inputs.repository-name }}
+    run: |
+      REPOSITORY_URI="$REGISTRY/$REPOSITORY"
+      echo "::set-output name=tags::$(echo $TAGS | sed "s|[^ ]*|$REPOSITORY_URI\:&\n|g")" 
+  - name: Build and push
+    id: docker_build
+    uses: docker/build-push-action@v2
+    with:
+      context: .
+      push: true
+      build-args: ${{ secrets.build-args }}
+      tags: "${{ steps.list.outputs.tags }}"
