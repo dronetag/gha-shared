@@ -2,17 +2,14 @@ name: Build & push
 description: |
 Builds an image using the project's Dockerfile, and pushes it 
 to ACR (Azure Container Registry) repository.
-secrets:
-  github-token:
-    required: true
-  acr-login-server:
-    required: true
-  acr-username:
-    required: true
-  acr-password:
-    required: true
-  build-args:
-    required: false
+inputs:
+      tags:
+        type: string
+        required: false
+        default: latest
+      repository-name:
+        type: string
+        required: true
 steps:
   - name: Checkout repository
     uses: actions/checkout@v2
