@@ -30,9 +30,25 @@ jobs:
     name: Build & push
     runs-on: ubuntu-20.04
     steps:
-      - name: Checkout repository
-        uses: ./.github/actions/build-push-acr/action.yaml
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build push
+        uses: dronetag/gha-shared/.github/actions/build-push-acr@master
+        env:
+          tags: ${{ inputs.tags }}
+          repository-name: ${{ inputs.repository-name }}
+          github-token: ${{ secrets.github-token }}
+          acr-login-server: ${{ secrets.acr-login-server }}
+          acr-username: ${{ secrets.acr-username }}
+          acr-password: ${{ secrets.acr-password }}
+          build-args: ${{ secrets.build-args }}
         with: 
-          tags: ${{ github.event.inputs.tags }}
-          repository-name: ${{ github.event.inputs.repository-name }}
+          tags: ${{ inputs.tags }}
+          repository-name: ${{ inputs.repository-name }}
+          github-token: ${{ secrets.github-token }}
+          acr-login-server: ${{ secrets.acr-login-server }}
+          acr-username: ${{ secrets.acr-username }}
+          acr-password: ${{ secrets.acr-password }}
+          build-args: ${{ secrets.build-args }}
+          actor: github.actor
           
