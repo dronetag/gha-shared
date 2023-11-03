@@ -5,6 +5,15 @@ inputs:
   bundle-path:
     description: The path to the bundle
     required: true
+  key-store-path:
+    description: The path to the Android Key Store for signing
+    required: true
+  key-store-pass-path:
+    description: The path to the Android Key Store password
+    required: true
+  key-store-alias:
+    description: The alias of the Android Key Store password
+    required: true
   bundletool-version:
     description: Bundletool version to use
     required: false
@@ -31,7 +40,7 @@ runs:
     - name: Build APKs
       shell: bash
       run: |
-        java -jar "${{runner.temp}}/bundletool.jar" build-apks --mode universal --bundle "${{ inputs.bundle-path }}" --output "${{runner.temp}}/bundle.apks"
+        java -jar "${{runner.temp}}/bundletool.jar" build-apks --mode universal --bundle "${{ inputs.bundle-path }}" --output "${{runner.temp}}/bundle.apks" --ks "${{ inputs.key-store-path }}" --ks-key-alias "${{ inputs.key-store-alias }}" --ks-pass "file:${{ inputs.key-store-pass-path }}" 
         unzip "${{runner.temp}}/bundle.apks"
     - name: Output the result
       id: result
