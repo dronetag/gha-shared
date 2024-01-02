@@ -1,0 +1,15 @@
+# forked from https://github.com/redpanda-data/github-action/blob/main/action.yml
+name: "redpanda-action"
+description: "Setup Redpanda"
+author: "fernandes"
+branding:
+  icon: fast-forward
+  color: red
+inputs:
+  version:
+    description: "Version of Redpanda to use"
+    required: false
+    default: "latest"
+runs:
+  using: "docker"
+  image: "Dockerfile"
