@@ -30,7 +30,7 @@ runs:
   using: composite
   steps:
     - name: Install flutter environment
-      uses: subosito/flutter-action@dbf1fa04f4d2e52c33185153d06cdb5443aa189d
+      uses: subosito/flutter-action@02b923c0e1a5868734f1d56fa4083c3be4f554f3
       with:
         flutter-version: ${{ inputs.flutter-version }}
         architecture: ${{ inputs.flutter-architecture }}
