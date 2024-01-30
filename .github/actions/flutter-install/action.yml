@@ -43,7 +43,7 @@ runs:
         distribution: 'zulu'
         java-version: ${{ inputs.java-version }}
     - name: Set-up ssh-agent
-      uses: webfactory/ssh-agent@fc49353b67b2b7c1e0e6a600572d01a69f2672dd
+      uses: webfactory/ssh-agent@fd34b8dee206fe74b288a5e61bc95fba2f1911eb
       if: ${{ inputs.git-ssh-key != '' }}
       with:
         ssh-private-key: ${{ inputs.git-ssh-key }}
