@@ -1,0 +1,125 @@
+name: 'Semantic Release version'
+description: 'Run semantic-release in dry-run mode to determine next version'
+
+inputs:
+  github-token:
+    required: false
+    default: 'dummy'
+    description: 'Pass only if your .releaserc uses the github plugin'
+  changelog:
+    required: false
+    default: 'true'
+    description: 'Whether to prepend to changelog.md and create changelog{VERSION}.md using semantic-release'
+
+outputs:
+  version:
+    description: "Next version in format X.Y.Z[-<prerelease-branch-name>.N]"
+    value: ${{ steps.get-version.outputs.version }}
+  existed:
+    description: "Existed will be true if the tag already existed"
+    value: ${{ steps.get-version.outputs.exists }}
+  prerelease:
+    description: "True if current version is a pre-release"
+    value: ${{ steps.get-version.outputs.prerelease }}
+  changelog:
+    description: "Changelog in markdown format"
+    value: ${{ steps.get-changelog.outputs.changelog }}
+
+runs:
+  using: 'composite'
+  steps:
+
+  - id: setup-node
+    uses: actions/setup-node@v4
+    with:
+      node-version: 'latest'
+
+  - id: install-semantic-release
+    run: npm install --global semantic-release@23 > /dev/null
+    shell: bash
+
+  - id: get-version
+    shell: bash
+    env:
+      GITHUB_TOKEN: ${{ inputs.github-token }}  # it is not used because of --dry-run ... but required if it uses semver/github plugin
+    run: |
+      NEXT_VERSION=$((semantic-release --dry-run | tee $RUNNER_TEMP/semrel.txt | grep "The next release version is" | python3 -c 'import sys;print(sys.stdin.readline().split(" ")[-1])') || echo "")
+
+      if [[ -z $NEXT_VERSION ]]; then
+          echo "exists=true" >> $GITHUB_OUTPUT
+          CURRENT_TAG=$(git tag --points-at HEAD)
+          if [[ $CURRENT_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+-[a-zA-Z0-9\-]+\.[0-9]+$ ]]; then
+              echo "prerelease=true" >> $GITHUB_OUTPUT
+          else
+            if [[ $CURRENT_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "prerelease=false" >> $GITHUB_OUTPUT
+            else
+              echo "Invalid tag on current commit. Expected vMAJOR.MINOR.PATCH(-SUFFIX)?, got ${CURRENT_TAG}"
+              exit 1
+            fi
+          fi
+          echo "CURRENT_VERSION: ${CURRENT_TAG#v}"
+          echo "version=${CURRENT_TAG#v}" >> $GITHUB_OUTPUT
+          exit 0
+      fi
+
+      if [[ ! $NEXT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+          echo "Version must start with x.y.z"
+          exit 1
+      fi
+
+      if [[ $NEXT_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+-[a-zA-Z0-9\-]+\.[0-9]+$ ]]; then
+          echo "Pre-release mode - make sure to create a new version/tag"
+          echo "prerelease=true" >> $GITHUB_OUTPUT
+          while git show-ref --tags "v$NEXT_VERSION" --quiet; do
+              echo "Tag v$NEXT_VERSION already exists. Incrementing last version part."
+              NEXT_VERSION=`python3 -c 'import sys;p=sys.stdin.readline().split("."); p[-1]=str(int(p[-1])+1);print(".".join(p))' <<< $NEXT_VERSION`
+          done
+      else
+        if git show-ref --tags v$NEXT_VERSION --quiet; then
+          echo "Release tag v$NEXT_VERSION already exists on another commit. Failling."
+          exit 1
+        fi
+        echo "prerelease=false" >> $GITHUB_OUTPUT
+      fi
+      echo "exists=false" >> $GITHUB_OUTPUT
+      echo "version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+      echo "Next version: $NEXT_VERSION"
+
+  - id: get-changelog
+    shell: bash
+    run: |
+      grep "release-notes-generator" .releaserc >/dev/null || {
+        echo "created=false" >> $GITHUB_OUTPUT
+        exit 0
+      }
+      CHANGELOG=$(awk '!f && /^#/ {f=1} f' $RUNNER_TEMP/semrel.txt)
+      echo "created=true" >> $GITHUB_OUTPUT
+      echo "changelog<<EOF" >> $GITHUB_OUTPUT
+      echo "$CHANGELOG" >> $GITHUB_OUTPUT
+      echo "EOF" >> $GITHUB_OUTPUT
+
+  - id: changelog
+    if: ${{ inputs.changelog == 'true' }}
+    env:
+      NEXT_VERSION: ${{ steps.get-version.outputs.version }}
+      CHANGELOG: ${{ steps.get-changelog.outputs.changelog }}
+    shell: bash
+    run: |
+      grep "release-notes-generator" .releaserc >/dev/null || exit 1
+      echo "$CHANGELOG" >> changelog-${NEXT_VERSION}.md
+      echo "" >> $RUNNER_TEMP/space.txt
+      if [[ -f changelog.md ]]; then
+          mv changelog.md changelog.tmp.md
+          cat changelog-${NEXT_VERSION}.md $RUNNER_TEMP/space.txt changelog.tmp.md > changelog.md
+          rm changelog.tmp.md
+      else
+          cp changelog-${NEXT_VERSION}.md changelog.md
+      fi
+
+  - id: upload-changelog
+    uses: actions/upload-artifact@v4
+    if: ${{ inputs.changelog == 'true' }}
+    with:
+      name: changelog-${{ steps.get-version.outputs.version }}
+      path: ./changelog-${{ steps.get-version.outputs.version }}.md

@@ -1,0 +1,64 @@
+name: '[Commit] and tag'
+description: 'Commit changes in repository (optional) and tag with a release tag vVERSION'
+
+inputs:
+  version:
+    required: true
+    description: 'Version to tag with (vVERSION) and to commmit ("Release VERSION") in format X.Y.Z[-aaa.N]'
+  github-token:
+    required: true
+    description: 'Pass only if your .releaserc uses the github plugin'
+
+  tag-message:
+    required: false
+    default: ''
+    description: 'If tag message is present then annotated tag will be created'
+  commit:
+    required: false
+    default: 'true'
+    description: 'Whether to commit if on a tip of the default branch (and changes exist); "false" to disable'
+  git-add:
+    required: false
+    default: ''
+    description: 'Extra files to `git add` when/if committing'
+
+runs:
+  using: 'composite'
+  steps:
+
+  - id: git-add
+    if: ${{ inputs.git-add != '' }}
+    run: git add ${{ inputs.git-add }}
+    shell: bash
+
+  - id: commit
+    if: ${{ inputs.commit == 'true' || inputs.commit == '1'}}
+    shell: bash
+    env:
+      GITHUB_TOKEN: ${{ inputs.github-token }}
+    run: |
+      if [[ $(git rev-parse origin/${{github.event.repository.default_branch}}) = $(git rev-parse HEAD) ]]; then
+        git checkout ${{github.event.repository.default_branch}}  # in case we are on tag
+        if ! (git diff --exit-code && git diff --cached --exit-code); then
+          # we have changes - either unstaged or staged => proceed with commit
+          git config --local user.email "" && git config --local user.name "GitHub Action"
+          git diff --name-only | xargs git add
+          git commit -m "Release ${{ inputs.version }} [skip ci]"
+          git push origin ${{github.event.repository.default_branch}}
+        fi
+      fi
+
+  - id: tag
+    shell: bash
+    env:
+      GITHUB_TOKEN: ${{ inputs.github-token }}
+      TAG_MESSAGE: ${{ inputs.tag-message }}
+    run: |
+      git show-ref --tags --verify --quiet "refs/tags/v${{ inputs.version }}" && exit 0
+      git config --local user.email "" && git config --local user.name "GitHub Action"
+      if [[ -z "${TAG_MESSAGE}" ]]; then
+        git tag v${{ inputs.version }}
+      else
+        git tag -a v${{ inputs.version }} -m "${TAG_MESSAGE}"
+      fi
+      git push origin v${{ inputs.version }}
