@@ -36,7 +36,7 @@ runs:
         distribution: 'zulu'
         java-version: ${{ inputs.java-version }}
     - name: Install flutter environment
-      uses: subosito/flutter-action@02b923c0e1a5868734f1d56fa4083c3be4f554f3
+      uses: subosito/flutter-action@v2.13.0
       with:
         flutter-version: ${{ inputs.flutter-version }}
         architecture: ${{ inputs.flutter-architecture }}
