@@ -1,0 +1,33 @@
+name: Build python package
+description: 'Build python package with `build` and update its version = "X.Y.Z" in pyproject.toml'
+
+inputs:
+  version:
+    required: true
+    description: 'Current version'
+
+runs:
+  using: 'composite'
+  steps:
+  - id: check-version-format
+    env:
+      version: ${{ inputs.version }}
+    run: |
+      if [[ ! $version =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+(\.[a-zA-Z0-9]+)*)?$ ]]; then
+        echo "Invalid version format. Expected MAJOR.MINOR.PATCH(-SUFFIX)?, got $version"
+        exit 1
+      fi
+    shell: bash
+
+  - id: install-tools
+    shell: bash
+    run: |
+      python3 -m pip install --upgrade wheel setuptools build
+
+  - id: build
+    shell: bash
+    env:
+      version: ${{ inputs.version }}
+    run: |
+      sed -i "s/version *= *[\"'][0-9].*/version = \"$version\"/g" pyproject.toml
+      python3 -m build --no-isolation
