@@ -22,6 +22,10 @@ inputs:
     description: Set to false if you want to skip the automatic project package installation
     required: false
     default: 'true'
+  enforce-lockfile:
+    description: Enforce pubspec.lock (if install is true). Fail resolution if pubspec.lock does not satisfy pubspec.yaml
+    required: false
+    default: 'true'
   git-ssh-key:
     description: If set, an ssh-agent will be setup with this private SSH key
     required: false
@@ -49,5 +53,5 @@ runs:
         ssh-private-key: ${{ inputs.git-ssh-key }}
     - name: Get project dependencies
       shell: bash
-      run: flutter pub get
+      run: flutter pub get ${{ inputs.enforce-lockfile == 'true' && '--enforce-lockfile'}}
       if: ${{ inputs.install == 'true' }}
