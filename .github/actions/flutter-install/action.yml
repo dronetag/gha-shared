@@ -53,5 +53,5 @@ runs:
         ssh-private-key: ${{ inputs.git-ssh-key }}
     - name: Get project dependencies
       shell: bash
-      run: flutter pub get ${{ inputs.enforce-lockfile == 'true' && '--enforce-lockfile'}}
+      run: flutter pub get ${{ (inputs.enforce-lockfile == 'true' && '--enforce-lockfile') || ''}}
       if: ${{ inputs.install == 'true' }}
