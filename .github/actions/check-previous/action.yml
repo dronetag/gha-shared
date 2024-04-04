@@ -1,7 +1,7 @@
 name: Check previous workflow
 description: |
   Action checks if there is a previously succeeded run of a specified
-  workflow for the current SHA
+  workflow for the current SHA or the provided ref
 inputs:
   workflow-name:
     description: The name of the workflow that should match
@@ -13,6 +13,9 @@ inputs:
     description: Fail the step if no successful run is found
     required: false
     default: "true"
+  ref:
+    description: ref to check against instead of current SHA
+    required: false
 outputs:
   found:
     description: The result of the check
