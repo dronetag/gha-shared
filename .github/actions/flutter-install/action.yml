@@ -30,6 +30,10 @@ inputs:
     description: If set, an ssh-agent will be setup with this private SSH key
     required: false
     default: ''
+  cache-flutter:
+    description: Cache the Flutter SDK and .pub-cache content
+    required: false
+    default: 'true'
 runs:
   using: composite
   steps:
@@ -45,7 +49,7 @@ runs:
         flutter-version: ${{ inputs.flutter-version }}
         architecture: ${{ inputs.flutter-architecture }}
         channel: stable
-        cache: true
+        cache: ${{ inputs.cache-flutter }}
     - name: Set-up ssh-agent
       uses: webfactory/ssh-agent@fd34b8dee206fe74b288a5e61bc95fba2f1911eb
       if: ${{ inputs.git-ssh-key != '' }}
