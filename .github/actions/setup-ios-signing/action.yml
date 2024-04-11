@@ -25,7 +25,7 @@ runs:
   steps:
     - name: Set-up Codemagic CLI Tools
       shell: bash
-      run: pip3 install codemagic-cli-tools
+      run: pip3 install codemagic-cli-tools --break-system-package
     - name: Obtain signing files from App Store Connect
       shell: bash
       run: >
