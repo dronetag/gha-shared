@@ -33,7 +33,7 @@ inputs:
   cache-flutter:
     description: Cache the Flutter SDK and .pub-cache content
     required: false
-    default: 'true'
+    default: 'false'
 runs:
   using: composite
   steps:
