@@ -50,7 +50,9 @@ jobs:
     steps:
       - name: Checkout repository (full-depth)
         uses: actions/checkout@v2
-        with: { fetch-depth: 0 } # Required to determine version
+        with: 
+          fetch-depth: 0 # Required to determine version
+          persist-credentials: false # Required to preserve GITHUB_TOKEN from secrets instead of CI one
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
