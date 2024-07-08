@@ -89,9 +89,9 @@ runs:
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
         secrets: |
-          "private_pip_url=${{ secrets.PRIV_PIP_HOST }}"
-          "private_pip_username=${{ secrets.PRIV_PIP_USER }}"
-          "private_pip_password=${{ secrets.PRIV_PIP_PASSWORD }}"
+          "private_pip_url=${{ inputs.private-pypi-host }}"
+          "private_pip_username=${{ inputs.private-pypi-user }}"
+          "private_pip_password=${{ inputs.private-pypi-pass }}"
     - id: docker_build-with-ssh
       name: Build and push with SSH agent socket
       if: ${{ inputs.ssh_socket_forward == 'true'}}
@@ -104,6 +104,6 @@ runs:
         ssh: |
             default=${{ env.SSH_AUTH_SOCK }}
         secrets: |
-          "private_pip_url=${{ secrets.PRIV_PIP_HOST }}"
-          "private_pip_username=${{ secrets.PRIV_PIP_USER }}"
-          "private_pip_password=${{ secrets.PRIV_PIP_PASSWORD }}"
+          "private_pip_url=${{ inputs.private-pypi-host }}"
+          "private_pip_username=${{ inputs.private-pypi-user }}"
+          "private_pip_password=${{ inputs.private-pypi-pass }}"
