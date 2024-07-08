@@ -24,6 +24,12 @@ on:
         required: true
       build-args:
         required: false
+      private-pypi-host:
+        required: false
+      private-pypi-user:
+        required: false
+      private-pypi-pass:
+        required: false
 
 jobs:
   build:
@@ -42,6 +48,9 @@ jobs:
           acr-username: ${{ secrets.acr-username }}
           acr-password: ${{ secrets.acr-password }}
           build-args: ${{ secrets.build-args }}
+          private-pypi-host: ${{ secrets.private-pypi-host }}
+          private-pypi-user: ${{ secrets.private-pypi-user }}
+          private-pypi-pass: ${{ secrets.private-pypi-pass }}
         with: 
           tags: ${{ inputs.tags }}
           repository-name: ${{ inputs.repository-name }}
@@ -51,4 +60,7 @@ jobs:
           acr-password: ${{ secrets.acr-password }}
           build-args: ${{ secrets.build-args }}
           actor: github.actor
+          private-pypi-host: ${{ secrets.private-pypi-host }}
+          private-pypi-user: ${{ secrets.private-pypi-user }}
+          private-pypi-pass: ${{ secrets.private-pypi-pass }}
           
