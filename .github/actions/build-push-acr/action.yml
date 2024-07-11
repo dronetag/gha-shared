@@ -30,7 +30,7 @@ inputs:
     required: true
   ssh_socket_forward:
     required: false
-    default: 'false'
+    default: "false"
   private-pypi-host:
     type: string
     required: false
@@ -82,7 +82,7 @@ runs:
     - id: docker_build
       name: Build and push without SSH agent socket
       if: ${{ inputs.ssh_socket_forward == 'false'}}
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: true
@@ -95,14 +95,14 @@ runs:
     - id: docker_build-with-ssh
       name: Build and push with SSH agent socket
       if: ${{ inputs.ssh_socket_forward == 'true'}}
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v6
       with:
         context: .
         push: true
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
         ssh: |
-            default=${{ env.SSH_AUTH_SOCK }}
+          default=${{ env.SSH_AUTH_SOCK }}
         secrets: |
           "private_pip_url=${{ secrets.PRIV_PIP_HOST }}"
           "private_pip_username=${{ secrets.PRIV_PIP_USER }}"
