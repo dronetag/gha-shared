@@ -1,5 +1,4 @@
 const fs = require('fs');
-const axios = require('axios');
 const core = require('@actions/core');
 
 async function run() {
@@ -12,14 +11,14 @@ async function run() {
     // Fetch secret from Vault
     const url = new URL(vaultAddr, secretPath).toString();
     const headers = { 'X-Vault-Token': vaultToken };
-    const response = await axios.get(url, { headers });
+    const response = await fetch(url, { method: 'GET', headers });
 
-    if (response.status !== 200) {
+    if (!response.ok) {
       core.setFailed(`Error: Unable to fetch data from Vault. Status code: ${response.status}`);
       return;
     }
 
-    const data = response.data.data.data; // yo dawg
+    const data = (await response.json()).data.data; // yo dawg
     if (!data) {
       core.setFailed('Error: No data found at the specified path.');
       return;
