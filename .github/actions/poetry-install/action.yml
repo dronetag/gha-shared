@@ -63,7 +63,7 @@ runs:
       shell: bash
     - name: Load dependency cache
       id: cached-poetry-dependencies
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: .venv
         key: venv-${{ github.repository }}-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
