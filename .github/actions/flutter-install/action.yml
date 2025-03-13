@@ -30,6 +30,10 @@ inputs:
     description: If set, an ssh-agent will be setup with this private SSH key
     required: false
     default: ''
+  cloudsmith-api-key:
+    description: If set, authenticate agains Clousmith private packages repository
+    required: false
+    default: ''
   cache-flutter:
     description: Cache the Flutter SDK and .pub-cache content
     required: false
@@ -55,6 +59,10 @@ runs:
       if: ${{ inputs.git-ssh-key != '' }}
       with:
         ssh-private-key: ${{ inputs.git-ssh-key }}
+    - name: Authenticate against private packages repository
+      if: ${{ inputs.cloudsmith-api-key != '' }}
+      shell: bash
+      run: echo ${{ inputs.cloudsmith-api-key  }} | flutter pub token add https://dart.cloudsmith.io/dronetag/software/
     - name: Get project dependencies
       shell: bash
       run: flutter pub get ${{ (inputs.enforce-lockfile == 'true' && '--enforce-lockfile') || ''}}
