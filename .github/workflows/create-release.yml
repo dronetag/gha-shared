@@ -44,7 +44,7 @@ on:
 jobs:
   determine-release:
     name: Determine new semantic version
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.export.outputs.version }}
     steps:
@@ -76,7 +76,7 @@ jobs:
           echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
   create-release:
     name: Create GitHub release version
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: determine-release
     if: ${{ inputs.create-github-release }}
     outputs:

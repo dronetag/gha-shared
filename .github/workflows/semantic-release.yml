@@ -33,7 +33,7 @@ on:
 jobs:
   release:
     name: Run semantic-release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.export.outputs.version }}
     steps:
