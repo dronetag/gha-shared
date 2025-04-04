@@ -30,10 +30,15 @@ inputs:
     description: If set, an ssh-agent will be setup with this private SSH key
     required: false
     default: ''
+  pub-url:
+    description: 'URL of private pub repository to be added (access key must be defined in PUB_KEY env variable)'
+    required: false
+    default: ''
   cache-flutter:
     description: Cache the Flutter SDK and .pub-cache content
     required: false
     default: 'false'
+  
 runs:
   using: composite
   steps:
@@ -55,6 +60,10 @@ runs:
       if: ${{ inputs.git-ssh-key != '' }}
       with:
         ssh-private-key: ${{ inputs.git-ssh-key }}
+    - name: Set-up private pub
+      shell: bash
+      if: ${{ inputs.pub-url != '' }}
+      run: dart pub token add ${{ inputs.pub-url }} --env-var PUB_KEY
     - name: Get project dependencies
       shell: bash
       run: flutter pub get ${{ (inputs.enforce-lockfile == 'true' && '--enforce-lockfile') || ''}}
