@@ -72,8 +72,9 @@ jobs:
       - name: Export released version
         id: export
         run: |
-          export VERSION=$(git describe --tags)
-          echo "version=${VERSION#v}" >> $GITHUB_OUTPUT
+          VERSION=$(git describe --tags)
+          VERSION=$(echo "$VERSION" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+).*$/\1/')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
   create-release:
     name: Create GitHub release version
     runs-on: ubuntu-24.04
