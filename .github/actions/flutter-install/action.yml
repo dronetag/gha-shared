@@ -7,38 +7,46 @@ inputs:
     description: Flutter version to use
     required: true
   flutter-architecture:
-    description: 'The architecture of Flutter SDK executable (x64 or arm64)'
+    description: "The architecture of Flutter SDK executable (x64 or arm64)"
     required: false
-    default: '${{ runner.arch }}'
+    default: "${{ runner.arch }}"
   setup-java:
     description: Defines if the Java environment should be set up
     required: false
-    default: 'true'
+    default: "true"
   java-version:
     description: Java version used (applicable only when setup-java is true)
     required: false
-    default: '17'
+    default: "17"
   install:
     description: Set to false if you want to skip the automatic project package installation
     required: false
-    default: 'true'
+    default: "true"
+  restore:
+    description: Restore packages from cache (requires install=false and cache-pub=true)
+    required: false
+    default: "false"
   enforce-lockfile:
     description: Enforce pubspec.lock (if install is true). Fail resolution if pubspec.lock does not satisfy pubspec.yaml
     required: false
-    default: 'true'
+    default: "true"
   git-ssh-key:
     description: If set, an ssh-agent will be setup with this private SSH key
     required: false
-    default: ''
+    default: ""
   pub-url:
-    description: 'URL of private pub repository to be added (access key must be defined in PUB_KEY env variable)'
+    description: "URL of private pub repository to be added (access key must be defined in PUB_KEY env variable)"
     required: false
-    default: ''
-  cache-flutter:
-    description: Cache the Flutter SDK and .pub-cache content
+    default: ""
+  cache-sdk:
+    description: Cache the Flutter SDK
     required: false
-    default: 'false'
-  
+    default: "false"
+  cache-pub:
+    description: Cache the .pub-cache contents
+    required: false
+    default: "false"
+
 runs:
   using: composite
   steps:
@@ -46,24 +54,37 @@ runs:
       uses: actions/setup-java@v2
       if: ${{ inputs.setup-java == 'true' }}
       with:
-        distribution: 'zulu'
+        distribution: "zulu"
         java-version: ${{ inputs.java-version }}
+
     - name: Install flutter environment
-      uses: subosito/flutter-action@v2.16.0
+      uses: subosito/flutter-action@v2.21.0
       with:
         flutter-version: ${{ inputs.flutter-version }}
         architecture: ${{ inputs.flutter-architecture }}
         channel: stable
         cache: ${{ inputs.cache-flutter }}
+
     - name: Set-up ssh-agent
       uses: webfactory/ssh-agent@fd34b8dee206fe74b288a5e61bc95fba2f1911eb
       if: ${{ inputs.git-ssh-key != '' }}
       with:
         ssh-private-key: ${{ inputs.git-ssh-key }}
+
     - name: Set-up private pub
       shell: bash
       if: ${{ inputs.pub-url != '' }}
       run: dart pub token add ${{ inputs.pub-url }} --env-var PUB_KEY
+
+    - name: Cache project dependencies
+      if: ${{ inputs.cache-pub == 'true' }}
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.pub-cache
+          .dart_tool
+        key: flutter-pubcache-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
+
     - name: Get project dependencies
       shell: bash
       run: flutter pub get ${{ (inputs.enforce-lockfile == 'true' && '--enforce-lockfile') || ''}}
