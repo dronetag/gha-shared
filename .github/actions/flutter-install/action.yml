@@ -41,7 +41,7 @@ inputs:
   cache-sdk:
     description: Cache the Flutter SDK
     required: false
-    default: "false"
+    default: "true"
   cache-pub:
     description: Cache the .pub-cache contents
     required: false
