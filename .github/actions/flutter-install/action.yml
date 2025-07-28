@@ -22,10 +22,6 @@ inputs:
     description: Set to false if you want to skip the automatic project package installation
     required: false
     default: "true"
-  restore:
-    description: Restore packages from cache (requires install=false and cache-pub=true)
-    required: false
-    default: "false"
   enforce-lockfile:
     description: Enforce pubspec.lock (if install is true). Fail resolution if pubspec.lock does not satisfy pubspec.yaml
     required: false
