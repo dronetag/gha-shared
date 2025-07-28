@@ -80,9 +80,7 @@ runs:
       if: ${{ inputs.cache-pub == 'true' }}
       uses: actions/cache@v4
       with:
-        path: |
-          ~/.pub-cache
-          .dart_tool
+        path: ~/.pub-cache
         key: flutter-pubcache-${{ runner.os }}-${{ hashFiles('**/pubspec.lock') }}
 
     - name: Get project dependencies
