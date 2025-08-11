@@ -59,7 +59,7 @@ runs:
         flutter-version: ${{ inputs.flutter-version }}
         architecture: ${{ inputs.flutter-architecture }}
         channel: stable
-        cache: ${{ inputs.cache-flutter }}
+        cache: ${{ inputs.cache-sdk }}
 
     - name: Set-up ssh-agent
       uses: webfactory/ssh-agent@fd34b8dee206fe74b288a5e61bc95fba2f1911eb
