@@ -7,6 +7,10 @@ inputs:
     type: string
     required: false
     default: latest
+  ref:
+    type: string
+    required: false
+    default: ''  # falsy value = fallback to default
   repository-name:
     type: string
     required: true
@@ -48,6 +52,8 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@v2
+      with:
+        ref: ${{ inputs.ref }}
     - id: auth-acr
       name: Authenticate with ACR
       uses: azure/docker-login@v1

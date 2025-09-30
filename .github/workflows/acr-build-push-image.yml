@@ -13,6 +13,10 @@ on:
       repository-name:
         type: string
         required: true
+      ref:
+        type: string
+        required: false
+        default: ''  # falsy value
     secrets:
       github-token:
         required: true
@@ -53,6 +57,7 @@ jobs:
           private-pypi-pass: ${{ secrets.private-pypi-pass }}
         with: 
           tags: ${{ inputs.tags }}
+          ref: ${{ inputs.ref }}
           repository-name: ${{ inputs.repository-name }}
           github-token: ${{ secrets.github-token }}
           acr-login-server: ${{ secrets.acr-login-server }}
