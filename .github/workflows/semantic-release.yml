@@ -1,5 +1,8 @@
 name: Release a new version
 
+# ==========================================
+# DEPRECATED: USE create-release.yml INSTEAD
+
 # This workflow runs the semantic-release tool
 #
 # The semantic-release tool analyses the latest commits and figures out

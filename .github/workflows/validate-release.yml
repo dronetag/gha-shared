@@ -1,0 +1,45 @@
+name: Validate release version
+
+# This workflow checks whether the current commit ref has a semantic version tag
+# (previously created by create-release.yml) and extracts the version from it.
+
+on:
+  workflow_call:
+    inputs:
+      strip-version-suffix:
+        description: "If true, strip any suffix from the tag (v1.2.3-rc.1 -> 1.2.3). If false, keep suffix (v1.2.3-rc.1 -> 1.2.3-rc.1)."
+        type: boolean
+        default: true
+    outputs:
+      version:
+        description: Released version
+        value: ${{ jobs.validate-release.outputs.version }}
+
+jobs:
+  validate-release:
+    name: Validate release tag existence
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.export.outputs.version }}
+    steps:
+      - name: Checkout repository (full-depth)
+        uses: actions/checkout@v6
+        with: { fetch-depth: 1 }
+      - name: Confirm semantic version tag exists on current commit
+        run: |
+          git fetch --tags
+          TAG=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+') || {
+            echo "::error::No semantic version tag found on current commit. Make sure create-release.yml ran successfully on this ref."
+            exit 1
+          }
+          echo "Found semantic version tag: $TAG"
+      - name: Export released version
+        id: export
+        run: |
+          VERSION=$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+          if [[ "${{ inputs.strip-version-suffix }}" == 'true' ]]; then
+            VERSION=$(echo "$VERSION" | sed -E 's/^v([0-9]+\.[0-9]+\.[0-9]+).*$/\1/')
+          else
+            VERSION="${VERSION#v}"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
