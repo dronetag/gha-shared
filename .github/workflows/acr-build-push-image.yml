@@ -17,6 +17,9 @@ on:
         type: string
         required: false
         default: ''  # falsy value
+      platforms:
+        type: string
+        required: false
     secrets:
       github-token:
         required: true
@@ -58,6 +61,7 @@ jobs:
         with: 
           tags: ${{ inputs.tags }}
           ref: ${{ inputs.ref }}
+          platforms: ${{ inputs.platforms }}
           repository-name: ${{ inputs.repository-name }}
           github-token: ${{ secrets.github-token }}
           acr-login-server: ${{ secrets.acr-login-server }}
