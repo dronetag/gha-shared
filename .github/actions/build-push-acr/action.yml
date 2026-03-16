@@ -29,6 +29,9 @@ inputs:
   build-args:
     type: string
     required: false
+  platforms:
+    type: string
+    required: false
   actor:
     type: string
     required: true
@@ -94,6 +97,7 @@ runs:
         push: true
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
+        platforms: ${{ inputs.platforms }}
         secrets: |
           "private_pip_url=https://${{ inputs.private-pypi-host }}"
           "private_pip_username=${{ inputs.private-pypi-user }}"
@@ -107,6 +111,7 @@ runs:
         push: true
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
+        platforms: ${{ inputs.platforms }}
         ssh: |
           default=${{ env.SSH_AUTH_SOCK }}
         secrets: |
