@@ -20,6 +20,12 @@ on:
       platforms:
         type: string
         required: false
+      use-buildx:
+        type: boolean
+        default: false
+      use-qemu:
+        type: boolean
+        default: false
     secrets:
       github-token:
         required: true
@@ -72,4 +78,6 @@ jobs:
           private-pypi-host: ${{ secrets.private-pypi-host }}
           private-pypi-user: ${{ secrets.private-pypi-user }}
           private-pypi-pass: ${{ secrets.private-pypi-pass }}
+          use-buildx: ${{ inputs.use-buildx }}
+          use-qemu: ${{ inputs.use-qemu }}
           
