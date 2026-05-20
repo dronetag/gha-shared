@@ -26,6 +26,10 @@ on:
       use-qemu:
         type: boolean
         default: false
+      context:
+        type: string
+        required: false
+        default: .
     secrets:
       github-token:
         required: true
@@ -67,6 +71,7 @@ jobs:
         with: 
           tags: ${{ inputs.tags }}
           ref: ${{ inputs.ref }}
+          context: ${{ inputs.context }}
           platforms: ${{ inputs.platforms }}
           repository-name: ${{ inputs.repository-name }}
           github-token: ${{ secrets.github-token }}

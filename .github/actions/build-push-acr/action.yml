@@ -15,6 +15,10 @@ inputs:
     type: string
     required: false
     default: ''  # falsy value = fallback to default
+  context:
+    type: string
+    required: false
+    default: .
   repository-name:
     type: string
     required: true
@@ -111,7 +115,7 @@ runs:
       if: ${{ inputs.ssh_socket_forward == 'false'}}
       uses: docker/build-push-action@v6
       with:
-        context: .
+        context: ${{ inputs.context }}
         push: true
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
@@ -125,7 +129,7 @@ runs:
       if: ${{ inputs.ssh_socket_forward == 'true'}}
       uses: docker/build-push-action@v6
       with:
-        context: .
+        context: ${{ inputs.context }}
         push: true
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
