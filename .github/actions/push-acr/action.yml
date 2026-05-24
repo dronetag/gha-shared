@@ -1,0 +1,72 @@
+name: Push Docker image to ACR
+description: |
+  Downloads a Docker image artifact, loads it locally, and pushes it to Azure Container Registry.
+inputs:
+  tags:
+    type: string
+    required: false
+    default: latest
+  repository-name:
+    type: string
+    required: true
+  artifact-name:
+    type: string
+    required: false
+    default: docker-image
+  acr-username:
+    type: string
+    required: true
+  acr-password:
+    type: string
+    required: true
+  acr-login-server:
+    type: string
+    required: true
+outputs:
+  tags:
+    value: ${{ steps.list.outputs.tags }}
+runs:
+  using: composite
+  steps:
+    - id: auth-acr
+      name: Authenticate with ACR
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{ inputs.acr-login-server }}
+        username: ${{ inputs.acr-username }}
+        password: ${{ inputs.acr-password }}
+    - id: list
+      name: List remote image tags
+      env:
+        TAGS: ${{ inputs.tags }}
+        REGISTRY: ${{ inputs.acr-login-server }}
+        REPOSITORY: ${{ inputs.repository-name }}
+      shell: bash
+      run: |
+        {
+          echo 'tags<<EOF'
+          echo "$TAGS" | sed "s|[^ ]*|$REGISTRY/$REPOSITORY:&|g"
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
+    - name: Download Docker image artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ runner.temp }}/docker-image
+    - name: Load Docker image artifact
+      shell: bash
+      run: |
+        docker load --input "${{ runner.temp }}/docker-image/${{ inputs.artifact-name }}.tar"
+    - name: Tag and push image to ACR
+      env:
+        TAGS: ${{ inputs.tags }}
+        REGISTRY: ${{ inputs.acr-login-server }}
+        REPOSITORY: ${{ inputs.repository-name }}
+      shell: bash
+      run: |
+        for tag in $TAGS; do
+          local_tag="$REPOSITORY:$tag"
+          remote_tag="$REGISTRY/$REPOSITORY:$tag"
+          docker image tag "$local_tag" "$remote_tag"
+          docker image push "$remote_tag"
+        done

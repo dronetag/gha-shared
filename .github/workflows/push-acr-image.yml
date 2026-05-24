@@ -1,0 +1,40 @@
+name: Push Docker image artifact to Azure Container Registry
+
+# Downloads a previously built Docker image artifact and pushes it to ACR.
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        type: string
+        required: false
+        default: latest
+      repository-name:
+        type: string
+        required: true
+      artifact-name:
+        type: string
+        required: false
+        default: docker-image
+    secrets:
+      acr-login-server:
+        required: true
+      acr-username:
+        required: true
+      acr-password:
+        required: true
+
+jobs:
+  push:
+    name: Push image to ACR
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Push Docker image artifact to ACR
+        uses: dronetag/gha-shared/.github/actions/push-acr@master
+        with:
+          tags: ${{ inputs.tags }}
+          repository-name: ${{ inputs.repository-name }}
+          artifact-name: ${{ inputs.artifact-name }}
+          acr-login-server: ${{ secrets.acr-login-server }}
+          acr-username: ${{ secrets.acr-username }}
+          acr-password: ${{ secrets.acr-password }}

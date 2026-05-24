@@ -1,0 +1,75 @@
+name: Build Docker image artifact
+
+# Builds a Docker image and uploads it as a workflow artifact.
+# This workflow exports a single-platform Docker tarball for later publishing.
+
+on:
+  workflow_call:
+    inputs:
+      tags:
+        type: string
+        required: false
+        default: latest
+      repository-name:
+        type: string
+        required: true
+      artifact-name:
+        type: string
+        required: false
+        default: docker-image
+      artifact-retention-days:
+        type: string
+        required: false
+        default: "1"
+      ref:
+        type: string
+        required: false
+        default: ''
+      platforms:
+        type: string
+        required: false
+      use-buildx:
+        type: boolean
+        default: false
+      use-qemu:
+        type: boolean
+        default: false
+      context:
+        type: string
+        required: false
+        default: .
+    secrets:
+      github-token:
+        required: false
+      build-args:
+        required: false
+      private-pypi-host:
+        required: false
+      private-pypi-user:
+        required: false
+      private-pypi-pass:
+        required: false
+
+jobs:
+  build:
+    name: Build Docker image artifact
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Build Docker image artifact
+        uses: dronetag/gha-shared/.github/actions/build-docker@master
+        with:
+          tags: ${{ inputs.tags }}
+          ref: ${{ inputs.ref }}
+          context: ${{ inputs.context }}
+          repository-name: ${{ inputs.repository-name }}
+          artifact-name: ${{ inputs.artifact-name }}
+          artifact-retention-days: ${{ inputs.artifact-retention-days }}
+          github-token: ${{ secrets.github-token }}
+          build-args: ${{ secrets.build-args }}
+          platforms: ${{ inputs.platforms }}
+          actor: ${{ github.actor }}
+          private-pypi-host: ${{ secrets.private-pypi-host }}
+          private-pypi-user: ${{ secrets.private-pypi-user }}
+          private-pypi-pass: ${{ secrets.private-pypi-pass }}
+          use-buildx: ${{ inputs.use-buildx }}
+          use-qemu: ${{ inputs.use-qemu }}

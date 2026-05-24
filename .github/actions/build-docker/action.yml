@@ -1,0 +1,149 @@
+name: Build Docker image
+description: |
+  Builds a Docker image and uploads it as a workflow artifact for a later push step.
+inputs:
+  tags:
+    type: string
+    required: false
+    default: latest
+  ref:
+    type: string
+    required: false
+    default: ''
+  context:
+    type: string
+    required: false
+    default: .
+  repository-name:
+    type: string
+    required: true
+  artifact-name:
+    type: string
+    required: false
+    default: docker-image
+  artifact-retention-days:
+    type: string
+    required: false
+    default: "1"
+  github-token:
+    type: string
+    required: false
+  build-args:
+    type: string
+    required: false
+  platforms:
+    type: string
+    required: false
+  actor:
+    type: string
+    required: false
+  ssh_socket_forward:
+    required: false
+    default: "false"
+  private-pypi-host:
+    type: string
+    required: false
+  private-pypi-user:
+    type: string
+    required: false
+  private-pypi-pass:
+    type: string
+    required: false
+  use-buildx:
+    type: boolean
+    default: false
+  use-qemu:
+    type: boolean
+    default: false
+outputs:
+  artifact-name:
+    value: ${{ inputs.artifact-name }}
+  tags:
+    value: ${{ steps.list.outputs.tags }}
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.ref }}
+    - id: auth-ghcr
+      name: Authorize Docker to ghcr.io
+      if: ${{ inputs.actor != '' && inputs.github-token != '' }}
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ inputs.actor }}
+        password: ${{ inputs.github-token }}
+    - id: list
+      name: List local image tags
+      env:
+        TAGS: ${{ inputs.tags }}
+        REPOSITORY: ${{ inputs.repository-name }}
+      shell: bash
+      run: |
+        {
+          echo 'tags<<EOF'
+          echo "$TAGS" | sed "s|[^ ]*|$REPOSITORY:&|g"
+          echo 'EOF'
+        } >> "$GITHUB_OUTPUT"
+    - name: Validate artifact export constraints
+      env:
+        PLATFORMS: ${{ inputs.platforms }}
+      shell: bash
+      run: |
+        if [[ "$PLATFORMS" == *,* ]]; then
+          echo "Artifact export supports only a single platform image. Received: $PLATFORMS" >&2
+          exit 1
+        fi
+    - id: collect-ssh-config
+      name: Collect Git and SSH config files in the Docker build context
+      if: ${{ inputs.ssh_socket_forward == 'true' }}
+      shell: bash
+      run: |
+        mkdir root-config
+        cp -r ~/.gitconfig ~/.ssh root-config/
+    - id: setup-qemu
+      name: Set up QEMU
+      if: ${{ inputs.use-qemu }}
+      uses: docker/setup-qemu-action@v3
+    - id: setup-buildx
+      name: Set up Docker Buildx
+      if: ${{ inputs.use-buildx }}
+      uses: docker/setup-buildx-action@v3
+    - id: docker_build
+      name: Build artifact without SSH agent socket
+      if: ${{ inputs.ssh_socket_forward == 'false' }}
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.context }}
+        build-args: ${{ inputs.build-args }}
+        tags: ${{ steps.list.outputs.tags }}
+        platforms: ${{ inputs.platforms }}
+        outputs: type=docker,dest=${{ runner.temp }}/${{ inputs.artifact-name }}.tar
+        secrets: |
+          "private_pip_url=https://${{ inputs.private-pypi-host }}"
+          "private_pip_username=${{ inputs.private-pypi-user }}"
+          "private_pip_password=${{ inputs.private-pypi-pass }}"
+    - id: docker_build-with-ssh
+      name: Build artifact with SSH agent socket
+      if: ${{ inputs.ssh_socket_forward == 'true' }}
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.context }}
+        build-args: ${{ inputs.build-args }}
+        tags: ${{ steps.list.outputs.tags }}
+        platforms: ${{ inputs.platforms }}
+        outputs: type=docker,dest=${{ runner.temp }}/${{ inputs.artifact-name }}.tar
+        ssh: |
+          default=${{ env.SSH_AUTH_SOCK }}
+        secrets: |
+          "private_pip_url=https://${{ inputs.private-pypi-host }}"
+          "private_pip_username=${{ inputs.private-pypi-user }}"
+          "private_pip_password=${{ inputs.private-pypi-pass }}"
+    - name: Upload Docker image artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ runner.temp }}/${{ inputs.artifact-name }}.tar
+        retention-days: ${{ inputs.artifact-retention-days }}
