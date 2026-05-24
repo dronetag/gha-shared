@@ -61,6 +61,9 @@ inputs:
   use-qemu:
     type: boolean
     default: false
+  push:
+    type: boolean
+    default: true
 outputs:
   tags:
     value: ${{ steps.list.outputs.tags }}
@@ -68,7 +71,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         ref: ${{ inputs.ref }}
     - id: auth-acr
@@ -111,12 +114,12 @@ runs:
       if: ${{ inputs.use-buildx }}
       uses: docker/setup-buildx-action@v3
     - id: docker_build
-      name: Build and push without SSH agent socket
+      name: Build with no SSH agent socket
       if: ${{ inputs.ssh_socket_forward == 'false'}}
       uses: docker/build-push-action@v6
       with:
         context: ${{ inputs.context }}
-        push: true
+        push: ${{ inputs.push }}
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
         platforms: ${{ inputs.platforms }}
@@ -125,12 +128,12 @@ runs:
           "private_pip_username=${{ inputs.private-pypi-user }}"
           "private_pip_password=${{ inputs.private-pypi-pass }}"
     - id: docker_build-with-ssh
-      name: Build and push with SSH agent socket
+      name: Build with SSH agent socket
       if: ${{ inputs.ssh_socket_forward == 'true'}}
       uses: docker/build-push-action@v6
       with:
         context: ${{ inputs.context }}
-        push: true
+        push: ${{ inputs.push }}
         build-args: ${{ inputs.build-args }}
         tags: "${{ steps.list.outputs.tags }}"
         platforms: ${{ inputs.platforms }}

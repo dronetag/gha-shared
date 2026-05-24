@@ -26,6 +26,9 @@ on:
       use-qemu:
         type: boolean
         default: false
+      push:
+        type: boolean
+        default: true
       context:
         type: string
         required: false
@@ -85,4 +88,5 @@ jobs:
           private-pypi-pass: ${{ secrets.private-pypi-pass }}
           use-buildx: ${{ inputs.use-buildx }}
           use-qemu: ${{ inputs.use-qemu }}
+          push: ${{ inputs.push }}
           
