@@ -35,13 +35,13 @@ on:
         default: .
     secrets:
       github-token:
-        required: true
+        required: false
       acr-login-server:
-        required: true
+        required: false
       acr-username:
-        required: true
+        required: false
       acr-password:
-        required: true
+        required: false
       build-args:
         required: false
       private-pypi-host:

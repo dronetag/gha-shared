@@ -24,16 +24,16 @@ inputs:
     required: true
   acr-username:
     type: string
-    required: true
+    required: false
   acr-password:
     type: string
-    required: true
+    required: false
   acr-login-server:
     type: string
-    required: true
+    required: false
   github-token:
     type: string
-    required: true
+    required: false
   build-args:
     type: string
     required: false
@@ -42,7 +42,7 @@ inputs:
     required: false
   actor:
     type: string
-    required: true
+    required: false
   ssh_socket_forward:
     required: false
     default: "false"
@@ -76,6 +76,7 @@ runs:
         ref: ${{ inputs.ref }}
     - id: auth-acr
       name: Authenticate with ACR
+      if: ${{ inputs.push }}
       uses: azure/docker-login@v1
       with:
         login-server: ${{ inputs.acr-login-server }}
@@ -83,6 +84,7 @@ runs:
         password: ${{ inputs.acr-password }}
     - id: auth-ghcr
       name: Authorize Docker to ghcr.io
+      if: ${{ inputs.push }}
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
@@ -91,12 +93,21 @@ runs:
     - id: list
       name: List output image tags
       env:
+        PUSH: ${{ inputs.push }}
         TAGS: ${{ inputs.tags }}
         REGISTRY: ${{ inputs.acr-login-server }}
         REPOSITORY: ${{ inputs.repository-name }}
       shell: bash
       run: |
-        REPOSITORY_URI="$REGISTRY/$REPOSITORY"
+        if [[ "$PUSH" == "true" ]]; then
+          if [[ -z "$REGISTRY" ]]; then
+            echo "ACR login server is required when push=true" >&2
+            exit 1
+          fi
+          REPOSITORY_URI="$REGISTRY/$REPOSITORY"
+        else
+          REPOSITORY_URI="$REPOSITORY"
+        fi
         echo "::set-output name=tags::$(echo $TAGS | sed "s|[^ ]*|$REPOSITORY_URI\:&\n|g")"
     - id: collect-ssh-config
       name: Collect Git and SSH config files in a directory that is part of the Docker build context
