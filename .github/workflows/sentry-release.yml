@@ -11,11 +11,6 @@ on:
       version:
         type: string
         required: true
-      # Per repository, so it cannot come from an org variable. Callers that
-      # still pass it as a secret keep working, see below.
-      project:
-        type: string
-        required: false
     secrets:
       auth-token:
         required: true
@@ -48,7 +43,7 @@ jobs:
           SENTRY_URL: ${{ vars.SENTRY_URL || secrets.url }}
           SENTRY_AUTH_TOKEN: ${{ secrets.auth-token }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG || secrets.organization }}
-          SENTRY_PROJECT: ${{ inputs.project || vars.SENTRY_PROJECT || secrets.project }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT || secrets.project }}
         with:
           version: ${{ inputs.version }}
           ignore_missing: true
