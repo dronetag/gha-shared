@@ -11,15 +11,24 @@ on:
       version:
         type: string
         required: true
+      # Per repository, so it cannot come from an org variable. Callers that
+      # still pass it as a secret keep working, see below.
+      project:
+        type: string
+        required: false
     secrets:
-      url:
-        required: true
       auth-token:
         required: true
+      # The legacy form of the three below. Only auth-token is really a secret;
+      # url and organization are an org slug and a public hostname, and masking
+      # them hides the project in a failing release. Drop these three once no
+      # caller passes them.
+      url:
+        required: false
       organization:
-        required: true
+        required: false
       project:
-        required: true
+        required: false
 
 
 jobs:
@@ -33,10 +42,13 @@ jobs:
       - name: Create Sentry release
         uses: getsentry/action-release@v1
         env:
-          SENTRY_URL: ${{ secrets.url }}
+          # vars resolves against the CALLING repository, so the org-level
+          # SENTRY_URL and SENTRY_ORG arrive without the caller passing
+          # anything. The secrets are the fallback until they are removed.
+          SENTRY_URL: ${{ vars.SENTRY_URL || secrets.url }}
           SENTRY_AUTH_TOKEN: ${{ secrets.auth-token }}
-          SENTRY_ORG: ${{ secrets.organization }}
-          SENTRY_PROJECT: ${{ secrets.project }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG || secrets.organization }}
+          SENTRY_PROJECT: ${{ inputs.project || vars.SENTRY_PROJECT || secrets.project }}
         with:
           version: ${{ inputs.version }}
           ignore_missing: true
